@@ -71,7 +71,7 @@ function App() {
         <Profile birthday={dainInfo.birthday} />
         <Anniversary birthday={dainInfo.birthday} />
         <Doljanchi partyDate={dainInfo.dolPartyDate} />
-        <PhotoGallery photos={dainPhotos} />
+        {/*-- <PhotoGallery photos={dainPhotos} /> */}
         <TodayFortune totalPhotos={totalPhotos} />
       </div>
     </>
