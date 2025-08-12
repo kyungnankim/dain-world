@@ -21,7 +21,6 @@ for (let i = 1; i <= totalPhotos; i++) {
     alt: `다인이 사진 ${i}`,
   });
 }
-
 const dainInfo = {
   birthday: "2024-09-23",
   dolPartyDate: "2025-09-13",
