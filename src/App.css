@@ -1,0 +1,154 @@
+@import url("https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap");
+
+/* --- 기본 body 스타일 --- */
+body {
+  font-family: "Gowun Dodum", sans-serif;
+  color: #5d4037;
+  margin: 0;
+  /* ✨ body의 배경색을 제거했습니다. 배경은 아래 floating-image-container가 담당합니다. */
+}
+
+/* --- 떠다니는 이미지 배경 --- */
+.floating-image-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  /* ✨ z-index를 -1로 설정하여 다른 모든 콘텐츠의 뒤로 보냅니다. */
+  z-index: -1;
+  /* ✨ 연한 핑크 배경색을 여기서 담당합니다. */
+  background-color: #fff0f5;
+}
+
+.floating-image {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  opacity: 0.5;
+  animation-name: float;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+/* 둥둥 떠다니는 애니메이션 효과 */
+@keyframes float {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(10deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+/* --- 메인 콘텐츠 스타일 --- */
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.container {
+  max-width: 800px;
+  width: 95%;
+  /* 배경이 뒤로 갔으므로 z-index와 position이 더 이상 필요 없습니다. */
+  background-color: rgba(255, 255, 255, 0.92);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  color: #e91e63;
+  text-align: center;
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+h2 {
+  color: #ff80ab;
+  border-bottom: 2px solid #ffc1e0;
+  padding-bottom: 10px;
+  margin-top: 40px;
+}
+
+.card {
+  background-color: #fffafa;
+  border: 1px solid #ffebee;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.card p {
+  font-size: 1.1em;
+  line-height: 1.8;
+  margin: 5px 0;
+}
+
+.card strong {
+  color: #e91e63;
+}
+
+.d-day {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: white;
+  background-color: #e91e63;
+  padding: 10px 20px;
+  border-radius: 25px;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+/* 오늘의 운세 스타일 */
+.fortune-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.fortune-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid #ffc1e0;
+}
+
+#fortune-text {
+  font-size: 1.2em;
+  font-weight: bold;
+  min-height: 50px;
+  padding: 15px;
+  background-color: #fff0f5;
+  border-radius: 10px;
+  width: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fortune-btn {
+  background-color: #ff80ab;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1em;
+  font-family: "Gowun Dodum", sans-serif;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.fortune-btn:hover {
+  background-color: #e91e63;
+}
