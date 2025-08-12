@@ -207,7 +207,7 @@ const TodayFortune = ({ totalPhotos }) => {
         className="fortune-img"
         onError={(e) => {
           e.target.onerror = null;
-          e.target.src = "/public/img/default.png";
+          e.target.src = "/img/default.png";
         }}
       />
       <div id="fortune-text">{fortune}</div>
