@@ -16,7 +16,7 @@ const PhotoGallery = ({ photos }) => {
         spaceBetween={10}
         slidesPerView={1}
         navigation={true}
-        loop={true}
+        loop={false}
         lazy={true}
         // ✨ 여기에 style 속성을 다시 추가하여 높이를 지정합니다.
         style={{ height: "500px", borderRadius: "10px" }}
