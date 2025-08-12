@@ -359,3 +359,25 @@ h2 {
     font-size: 1em;
   }
 }
+/* ... App.css 파일의 맨 아래에 추가 ... */
+
+/* 게임 시작 버튼을 위한 추가 스타일 */
+.game-start-btn {
+  background-color: #e91e63; /* 메인 테마 색상 */
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  font-size: 1.1em;
+  font-family: "Gowun Dodum", sans-serif;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.game-start-btn:hover {
+  background-color: #ff80ab; /* 호버 시 색상 변경 */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
