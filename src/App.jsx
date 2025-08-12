@@ -14,11 +14,10 @@ const totalPhotos = 150;
 const dainPhotos = [];
 
 // 2. ImageKit.io URL 형식에 맞게 이미지 주소 생성
-
 for (let i = 1; i <= totalPhotos; i++) {
   dainPhotos.push({
-    // 모든 사진의 주소를 '성공하는 주소'로 강제 변경해서 테스트
-    url: `https://ik.imagekit.io/duixwrddg/default-dain-world/default.png`,
+    // ImageKit 폴더와 파일명을 조합하여 URL을 완성합니다.
+    url: `${IMAGEKIT_URL_ENDPOINT}/dain-world/dain_${i}.jpg`,
     alt: `다인이 사진 ${i}`,
   });
 }
