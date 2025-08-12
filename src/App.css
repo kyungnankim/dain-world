@@ -152,3 +152,24 @@ h2 {
 .fortune-btn:hover {
   background-color: #e91e63;
 }
+.swiper-button-next,
+.swiper-button-prev {
+  background-color: rgba(0, 0, 0, 0.5); /* 버튼 배경색 */
+  color: white; /* 버튼 색상 */
+  width: 40px; /* 버튼 크기 */
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%; /* 버튼 중앙에 위치 */
+  z-index: 10; /* 버튼을 다른 요소 위에 배치 */
+}
+
+.swiper-button-next {
+  right: 10px; /* 오른쪽 버튼 */
+}
+
+.swiper-button-prev {
+  left: 10px; /* 왼쪽 버튼 */
+}

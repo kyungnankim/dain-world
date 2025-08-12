@@ -1,36 +1,34 @@
+// src/components/PhotoGallery.jsx
+
 import React from "react";
+// 1. 기능에 필요한 'Navigation' 모듈을 import 합니다.
+import { Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Lazy } from "swiper/modules";
 
 import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/lazy";
+import "swiper/css/navigation"; // 네비게이션 '스타일'은 그대로 둡니다.
 
 const PhotoGallery = ({ photos }) => {
   return (
     <div>
       <h2>다인이의 성장 앨범</h2>
       <Swiper
-        modules={[Navigation, Lazy]}
+        // 2. 사용할 모듈 목록을 Swiper에 등록합니다.
+        modules={[Navigation]}
         spaceBetween={10}
         slidesPerView={1}
-        navigation
-        loop={false} // loop 비활성화
-        lazy={{
-          loadPrevNext: true, // 이전/다음 이미지 미리 로딩
-          loadOnTransitionStart: true, // 전환 시작 시 이미지를 로드
-        }}
+        // 3. navigation 옵션을 true로 설정합니다.
+        navigation={true}
+        loop={true}
         style={{ height: "500px", borderRadius: "10px" }}
       >
         {photos.map((photo, index) => (
           <SwiperSlide key={index}>
             <img
-              data-src={photo.url} // 이미지 경로를 data-src로 넣기
+              src={photo.url}
               alt={photo.alt}
-              className="swiper-lazy" // lazy 로딩 클래스
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
-            <div className="swiper-lazy-preloader swiper-lazy-preloader-white"></div>
           </SwiperSlide>
         ))}
       </Swiper>

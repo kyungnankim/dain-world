@@ -207,8 +207,7 @@ const TodayFortune = ({ totalPhotos }) => {
         className="fortune-img"
         onError={(e) => {
           e.target.onerror = null;
-          e.target.src =
-            "https://via.placeholder.com/150x150/FFC0CB/000000?Text=Dain";
+          e.target.src = "/public/img/default.png";
         }}
       />
       <div id="fortune-text">{fortune}</div>
