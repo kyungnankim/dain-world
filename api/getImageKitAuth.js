@@ -3,7 +3,7 @@ import crypto from "crypto";
 
 export default function handler(req, res) {
   const token = Math.random().toString(36).substring(2);
-  const expire = Math.floor(Date.now() / 1000) + 60 * 30; // 30분
+  const expire = Math.floor(Date.now() / 1000) + 60 * 30;
   const signature = crypto
     .createHmac("sha1", process.env.IMAGEKIT_PRIVATE_KEY)
     .update(token + expire)

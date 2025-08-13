@@ -51,7 +51,7 @@ const PhotoUpload = ({
   };
 
   const generateImageKitAuthToken = async () => {
-    const res = await fetch("/api/getImageKitAuth");
+    const res = await fetch(`${window.location.origin}/api/getImageKitAuth`);
     if (!res.ok) throw new Error("인증 토큰 요청 실패");
     return res.json();
   };

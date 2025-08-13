@@ -9,6 +9,9 @@ const imagekit = new ImageKit({
 
 export default async function handler(req, res) {
   const { folder } = req.query;
+  if (!folder) {
+    return res.status(400).json({ error: "folder 파라미터가 필요합니다" });
+  }
 
   try {
     const files = await imagekit.listFiles({
@@ -27,7 +30,6 @@ export default async function handler(req, res) {
 
     res.status(200).json(photos);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "이미지 불러오기 실패" });
   }
 }
