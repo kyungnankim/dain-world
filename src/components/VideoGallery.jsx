@@ -9,50 +9,42 @@ const VideoGallery = ({ onBack }) => {
     {
       id: 1,
       title: "다인이 첫 웃음 😊",
-      youtubeId: "dQw4w9WgXcQ", // 실제 유튜브 영상 ID로 교체
-      thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg`,
+      youtubeId: "9wkbeXGS5v4",
+      thumbnail: `https://img.youtube.com/vi/9wkbeXGS5v4/mqdefault.jpg`,
       date: "2024-10-15",
       description: "다인이가 처음으로 웃는 모습",
     },
     {
       id: 2,
       title: "다인이 옹알이 🗣️",
-      youtubeId: "dQw4w9WgXcQ", // 실제 유튜브 영상 ID로 교체
-      thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg`,
+      youtubeId: "QUZy_3dCGdk",
+      thumbnail: `https://img.youtube.com/vi/QUZy_3dCGdk/mqdefault.jpg`,
       date: "2024-11-20",
       description: "다인이의 귀여운 옹알이",
     },
     {
       id: 3,
       title: "다인이 뒤집기 🤸‍♀️",
-      youtubeId: "dQw4w9WgXcQ", // 실제 유튜브 영상 ID로 교체
-      thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg`,
+      youtubeId: "5q6fhAFXjH0",
+      thumbnail: `https://img.youtube.com/vi/5q6fhAFXjH0/mqdefault.jpg`,
       date: "2024-12-01",
       description: "다인이가 처음으로 뒤집는 순간",
     },
     {
       id: 4,
       title: "다인이 이유식 먹방 🍼",
-      youtubeId: "dQw4w9WgXcQ", // 실제 유튜브 영상 ID로 교체
-      thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg`,
+      youtubeId: "1OVWaPMc-sY",
+      thumbnail: `https://img.youtube.com/vi/1OVWaPMc-sY/mqdefault.jpg`,
       date: "2025-01-10",
       description: "다인이의 첫 이유식 도전",
     },
     {
       id: 5,
       title: "다인이와 함께하는 목욕시간 🛁",
-      youtubeId: "dQw4w9WgXcQ", // 실제 유튜브 영상 ID로 교체
-      thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg`,
+      youtubeId: "bBXaXeWPiFM",
+      thumbnail: `https://img.youtube.com/vi/bBXaXeWPiFM/mqdefault.jpg`,
       date: "2025-02-05",
       description: "다인이의 즐거운 목욕시간",
-    },
-    {
-      id: 6,
-      title: "다인이 첫 장난감 🧸",
-      youtubeId: "dQw4w9WgXcQ", // 실제 유튜브 영상 ID로 교체
-      thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg`,
-      date: "2025-03-15",
-      description: "다인이와 새로운 장난감 친구들",
     },
   ];
 
