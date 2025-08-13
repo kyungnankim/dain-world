@@ -13,10 +13,10 @@
   "dependencies": {
     "crypto-js": "^4.2.0",
     "firebase": "^12.1.0",
+    "imagekit": "^4.1.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "swiper": "^11.2.10",
-    "imagekit": "^4.1.4"
+    "swiper": "^11.2.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
