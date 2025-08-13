@@ -1,14 +1,18 @@
 // src/components/MonthlyPhotos.jsx
 import React, { useState, useEffect } from "react";
-import PhotoUpload from "./PhotoUpload"; // PhotoUpload 컴포넌트를 임포트합니다.
+import PhotoUpload from "./PhotoUpload";
 
-const MonthlyPhotos = ({ onBack, photos = [] }) => {
+const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
   const [uploadMonth, setUploadMonth] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(null);
-  const [monthPhotos, setMonthPhotos] = useState([]);
-  const [allPhotos, setAllPhotos] = useState([]); // 모든 사진(업로드 포함)을 관리하는 상태
+  const [imageErrors, setImageErrors] = useState(new Set());
+
+  useEffect(() => {
+    console.log("MonthlyPhotos - 받은 사진 개수:", photos.length);
+    console.log("MonthlyPhotos - 사진 데이터:", photos);
+  }, [photos]);
 
   // 월별 정보
   const months = [
@@ -26,62 +30,52 @@ const MonthlyPhotos = ({ onBack, photos = [] }) => {
     { month: 12, name: "12월", emoji: "🎄", color: "#90EE90" },
   ];
 
-  // 컴포넌트가 처음 마운트될 때, 초기 사진들에 월 정보를 할당합니다.
-  useEffect(() => {
-    const processedPhotos = photos.map((photo, index) => ({
-      ...photo,
-      month: (index % 12) + 1,
-    }));
-    setAllPhotos(processedPhotos);
-  }, [photos]);
-
-  // 월별 사진들을 가져오는 함수
+  // 월별 사진들을 props로 받은 photos에서 직접 가져옵니다.
   const getPhotosForMonth = (monthNum) => {
-    return allPhotos.filter((p) => p.month === monthNum);
+    const monthPhotos = photos.filter((p) => p.month === monthNum);
+    console.log(`${monthNum}월 사진 개수:`, monthPhotos.length);
+    return monthPhotos;
   };
 
-  // 월 선택 처리
+  // 전체 통계 계산
+  const getTotalStats = () => {
+    const totalPhotos = photos.length;
+    const monthsWithPhotos = months.filter(
+      (m) => getPhotosForMonth(m.month).length > 0
+    ).length;
+    const averagePerMonth =
+      monthsWithPhotos > 0 ? Math.round(totalPhotos / monthsWithPhotos) : 0;
+
+    return { totalPhotos, monthsWithPhotos, averagePerMonth };
+  };
+
   const handleMonthSelect = (monthNum) => {
-    if (selectedMonth === monthNum) {
-      setSelectedMonth(null);
-      setMonthPhotos([]);
-    } else {
-      setSelectedMonth(monthNum);
-      setMonthPhotos(getPhotosForMonth(monthNum));
-    }
+    console.log(`${monthNum}월 선택됨`);
+    setSelectedMonth((prevMonth) => (prevMonth === monthNum ? null : monthNum));
   };
 
-  // ==========================================================
-  // 1. 사진 삭제 핸들러 추가
-  // ==========================================================
-  const handleDeleteExistingPhotos = (monthToDelete) => {
-    // 1. 전체 사진 목록에서 해당 월의 사진들을 제거
-    setAllPhotos((prevPhotos) =>
-      prevPhotos.filter((p) => p.month !== monthToDelete)
-    );
-
-    // 2. 현재 보고 있는 월의 사진 목록이라면, 즉시 비워줌
-    if (selectedMonth === monthToDelete) {
-      setMonthPhotos([]);
-    }
+  const openModal = (photo) => {
+    console.log("모달 열기:", photo);
+    setSelectedImage(photo);
   };
 
-  // ==========================================================
-  // 2. 사진 업로드 핸들러 수정
-  // ==========================================================
-  const handlePhotoUploaded = (newPhoto) => {
-    // 1. 전체 사진 목록에 새 사진을 추가 (상태 업데이트는 비동기)
-    setAllPhotos((prevPhotos) => [...prevPhotos, newPhoto]);
-
-    // 2. 현재 보고 있는 월의 사진 목록에 새 사진을 바로 추가하여 UI에 즉시 반영
-    if (selectedMonth === newPhoto.month) {
-      setMonthPhotos((prevMonthPhotos) => [...prevMonthPhotos, newPhoto]);
-    }
-  };
-
-  const openModal = (photo) => setSelectedImage(photo);
   const closeModal = () => setSelectedImage(null);
 
+  // 이미지 에러 처리
+  const handleImageError = (photoId, imageUrl) => {
+    console.error("이미지 로드 실패:", imageUrl);
+    setImageErrors((prev) => new Set([...prev, photoId]));
+  };
+
+  const handleImageLoad = (photoId) => {
+    setImageErrors((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(photoId);
+      return newSet;
+    });
+  };
+
+  // 'Esc' 키로 모달을 닫는 기능을 추가합니다.
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") closeModal();
@@ -92,33 +86,24 @@ const MonthlyPhotos = ({ onBack, photos = [] }) => {
     }
   }, [selectedImage]);
 
-  // 사진 업로드 화면 렌더링
+  // 사진 업로드 화면을 보여줄 때
   if (showUpload) {
     const monthInfo = months.find((m) => m.month === uploadMonth);
     return (
-      // ==========================================================
-      // 3. PhotoUpload 컴포넌트에 새로운 props 전달
-      // ==========================================================
       <PhotoUpload
         month={uploadMonth}
         monthName={monthInfo?.name}
-        onBack={() => {
-          // 업로드 완료 후, 갤러리 화면으로 돌아올 때 최신 사진 목록을 다시 불러옴
-          if (selectedMonth === uploadMonth) {
-            setMonthPhotos(getPhotosForMonth(uploadMonth));
-          }
-          setShowUpload(false);
-          setUploadMonth(null);
-        }}
-        onPhotoUploaded={handlePhotoUploaded}
-        // 아래 2개의 prop을 추가합니다.
+        onBack={() => setShowUpload(false)}
+        onPhotoUploaded={onAddPhoto}
         existingPhotos={getPhotosForMonth(uploadMonth)}
-        onDeleteExistingPhotos={handleDeleteExistingPhotos}
+        onDeleteSelectedPhotos={onDeletePhotos}
       />
     );
   }
 
-  // 메인 갤러리 화면 렌더링 (이하 코드는 변경 없음)
+  const stats = getTotalStats();
+
+  // 기본 월별 갤러리 화면
   return (
     <div className="monthly-photos-container">
       <div className="monthly-header">
@@ -126,25 +111,54 @@ const MonthlyPhotos = ({ onBack, photos = [] }) => {
           ← 돌아가기
         </button>
         <div className="monthly-title">
-          <span className="month-emoji-large">📸</span>
+          <span className="month-emoji-large">📅</span>
           <h1>월별 사진 갤러리</h1>
+          <span className="month-emoji-large">📸</span>
         </div>
         <div />
       </div>
 
-      <div className="monthly-content">
-        <div className="gallery-description">
-          <p
-            style={{ textAlign: "center", color: "#666", marginBottom: "25px" }}
-          >
-            다인이의 성장 과정을 월별로 만나보세요 💕
+      {/* 전체 통계 표시 */}
+      <div
+        className="card"
+        style={{
+          margin: "20px",
+          padding: "15px",
+          backgroundColor: "#f8f9fa",
+          textAlign: "center",
+        }}
+      >
+        <h3 style={{ margin: "0 0 10px 0", color: "#333" }}>📊 사진 현황</h3>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-around",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <strong style={{ color: "#ff69b4" }}>{stats.totalPhotos}</strong>
             <br />
-            <small style={{ color: "#999" }}>
-              월별 카드를 클릭하면 해당 월의 사진들이 아래에 나타나요!
-            </small>
-          </p>
+            <small>총 사진</small>
+          </div>
+          <div>
+            <strong style={{ color: "#4CAF50" }}>
+              {stats.monthsWithPhotos}
+            </strong>
+            <br />
+            <small>사진 있는 달</small>
+          </div>
+          <div>
+            <strong style={{ color: "#2196F3" }}>
+              {stats.averagePerMonth}
+            </strong>
+            <br />
+            <small>평균/월</small>
+          </div>
         </div>
+      </div>
 
+      <div className="monthly-content">
         <div className="compact-months-grid">
           {months.map((monthInfo) => {
             const monthPhotoCount = getPhotosForMonth(monthInfo.month).length;
@@ -153,14 +167,36 @@ const MonthlyPhotos = ({ onBack, photos = [] }) => {
               <div
                 key={monthInfo.month}
                 className={`compact-month-card ${isSelected ? "selected" : ""}`}
-                style={{ backgroundColor: monthInfo.color }}
+                style={{
+                  backgroundColor: monthInfo.color,
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  transform: isSelected ? "scale(1.05)" : "scale(1)",
+                  border: isSelected
+                    ? "3px solid #ff69b4"
+                    : "2px solid transparent",
+                }}
                 onClick={() => handleMonthSelect(monthInfo.month)}
               >
                 <div className="compact-month-content">
-                  <div className="compact-month-emoji">{monthInfo.emoji}</div>
-                  <div className="compact-month-name">{monthInfo.name}</div>
-                  <div className="compact-photo-count">
-                    {monthPhotoCount > 0 ? `${monthPhotoCount}장` : "없음"}
+                  <div
+                    className="compact-month-emoji"
+                    style={{ fontSize: "24px" }}
+                  >
+                    {monthInfo.emoji}
+                  </div>
+                  <div style={{ fontWeight: "bold", fontSize: "14px" }}>
+                    {monthInfo.name}
+                  </div>
+                  <div
+                    className="compact-photo-count"
+                    style={{
+                      fontSize: "12px",
+                      color: monthPhotoCount > 0 ? "#333" : "#999",
+                      fontWeight: monthPhotoCount > 0 ? "bold" : "normal",
+                    }}
+                  >
+                    {monthPhotoCount}장
                   </div>
                 </div>
                 {isSelected && <div className="selected-indicator">✓</div>}
@@ -197,25 +233,88 @@ const MonthlyPhotos = ({ onBack, photos = [] }) => {
 
             {getPhotosForMonth(selectedMonth).length > 0 ? (
               <div className="selected-month-grid">
-                {monthPhotos.map((photo, index) => (
-                  <div
-                    key={photo.id || index}
-                    className="selected-photo-item"
-                    onClick={() => openModal(photo)}
-                  >
-                    <img
-                      src={photo.thumbnailUrl || photo.url}
-                      alt={photo.alt}
-                      className="selected-photo-thumbnail"
-                      loading="lazy"
-                    />
-                    {photo.uploadDate && (
-                      <div className="selected-photo-date">
-                        {new Date(photo.uploadDate).toLocaleDateString()}
+                {getPhotosForMonth(selectedMonth).map((photo) => {
+                  const hasError = imageErrors.has(photo.id);
+                  const imageUrl = photo.thumbnailUrl || photo.url;
+
+                  return (
+                    <div
+                      key={photo.id}
+                      className="selected-photo-item"
+                      onClick={() => !hasError && openModal(photo)}
+                      style={{
+                        cursor: hasError ? "default" : "pointer",
+                        position: "relative",
+                      }}
+                    >
+                      {hasError ? (
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "120px",
+                            backgroundColor: "#f5f5f5",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: "8px",
+                            border: "2px dashed #ddd",
+                          }}
+                        >
+                          <div style={{ textAlign: "center", color: "#999" }}>
+                            <div
+                              style={{ fontSize: "20px", marginBottom: "5px" }}
+                            >
+                              📷
+                            </div>
+                            <div style={{ fontSize: "10px" }}>로드 실패</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <img
+                          src={imageUrl}
+                          alt={photo.alt || photo.name}
+                          className="selected-photo-thumbnail"
+                          loading="lazy"
+                          onLoad={() => handleImageLoad(photo.id)}
+                          onError={() => handleImageError(photo.id, imageUrl)}
+                          style={{
+                            width: "100%",
+                            height: "120px",
+                            objectFit: "cover",
+                            borderRadius: "8px",
+                            transition: "transform 0.3s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.transform = "scale(1.05)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.transform = "scale(1)";
+                          }}
+                        />
+                      )}
+
+                      {/* 사진 이름 표시 */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "0",
+                          left: "0",
+                          right: "0",
+                          backgroundColor: "rgba(0,0,0,0.7)",
+                          color: "white",
+                          padding: "2px 5px",
+                          fontSize: "10px",
+                          borderRadius: "0 0 8px 8px",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {photo.name || "unnamed"}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="no-selected-photos">
@@ -240,61 +339,102 @@ const MonthlyPhotos = ({ onBack, photos = [] }) => {
             )}
           </div>
         )}
-
-        {!selectedMonth && (
-          <div className="no-month-selected">
-            <div className="selection-guide">
-              <span className="guide-emoji">👆</span>
-              <h3>월별 카드를 선택해주세요</h3>
-              <p>
-                위의 월별 카드 중 하나를 클릭하면
-                <br />그 달의 소중한 사진들을 볼 수 있어요!
-              </p>
-            </div>
-            <div className="gallery-stats-compact">
-              <div className="stats-compact">
-                <div className="stat-item-compact">
-                  <span className="stat-number-compact">
-                    {allPhotos.length}
-                  </span>
-                  <span className="stat-label-compact">전체 사진</span>
-                </div>
-                <div className="stat-item-compact">
-                  <span className="stat-number-compact">12</span>
-                  <span className="stat-label-compact">개월</span>
-                </div>
-                <div className="stat-item-compact">
-                  <span className="stat-number-compact">∞</span>
-                  <span className="stat-label-compact">추억</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* 모달 */}
       {selectedImage && (
-        <div className="photo-modal" onClick={closeModal}>
+        <div
+          className="modal-overlay"
+          onClick={closeModal}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+            padding: "20px",
+            boxSizing: "border-box",
+          }}
+        >
           <div
-            className="photo-modal-content"
+            className="modal-content"
             onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+            }}
           >
-            <button className="photo-close-btn" onClick={closeModal}>
-              ✕
-            </button>
             <img
               src={selectedImage.fullUrl || selectedImage.url}
-              alt={selectedImage.alt}
-              className="modal-photo"
+              alt={selectedImage.alt || selectedImage.name}
+              onError={(e) => {
+                console.error("모달 이미지 로드 실패:", selectedImage);
+                e.target.src = selectedImage.url;
+              }}
+              style={{
+                width: "100%",
+                height: "auto",
+                maxWidth: "600px",
+                maxHeight: "80vh",
+                objectFit: "contain",
+                borderRadius: "10px",
+              }}
             />
-            {selectedImage.uploadDate && (
-              <div className="photo-modal-info">
-                <p>
-                  업로드:{" "}
-                  {new Date(selectedImage.uploadDate).toLocaleDateString()}
-                </p>
+            <button
+              onClick={closeModal}
+              style={{
+                position: "absolute",
+                top: "-40px",
+                right: "0",
+                background: "rgba(255, 255, 255, 0.8)",
+                border: "none",
+                borderRadius: "50%",
+                width: "30px",
+                height: "30px",
+                fontSize: "18px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ×
+            </button>
+
+            {/* 사진 상세 정보 */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-60px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                padding: "10px 20px",
+                borderRadius: "20px",
+                textAlign: "center",
+                minWidth: "200px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  marginBottom: "5px",
+                }}
+              >
+                {selectedImage.month}월 • {selectedImage.name || "다인이 사진"}
               </div>
-            )}
+              <div style={{ fontSize: "12px", color: "#666" }}>
+                {selectedImage.createdAt &&
+                  new Date(selectedImage.createdAt).toLocaleDateString("ko-KR")}
+              </div>
+            </div>
           </div>
         </div>
       )}

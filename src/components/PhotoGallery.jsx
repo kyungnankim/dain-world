@@ -1,14 +1,21 @@
 // src/components/PhotoGallery.jsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 
-function PhotoGallery({ photos }) {
+function PhotoGallery({ photos = [] }) {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [imageErrors, setImageErrors] = useState(new Set());
+
+  useEffect(() => {
+    console.log("PhotoGallery - 받은 사진 개수:", photos.length);
+    console.log("PhotoGallery - 사진 데이터:", photos);
+  }, [photos]);
 
   const openModal = useCallback((photo) => {
+    console.log("모달 열기:", photo);
     setSelectedImage(photo);
   }, []);
 
@@ -26,17 +33,55 @@ function PhotoGallery({ photos }) {
     [closeModal]
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedImage) {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [selectedImage, handleKeyDown]);
 
+  // 이미지 로드 에러 처리
+  const handleImageError = useCallback((photoId, imageUrl) => {
+    console.error("이미지 로드 실패:", imageUrl);
+    setImageErrors((prev) => new Set([...prev, photoId]));
+  }, []);
+
+  const handleImageLoad = useCallback((photoId) => {
+    console.log("이미지 로드 성공:", photoId);
+    setImageErrors((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(photoId);
+      return newSet;
+    });
+  }, []);
+
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="card">
+        <h2>📸 다인이의 성장 앨범</h2>
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <p>아직 사진이 없어요 📷</p>
+          <p>월별 사진 갤러리에서 사진을 추가해주세요!</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      <h2>📸 다인이의 성장 앨범</h2>
       <div className="card">
+        <h2>📸 다인이의 성장 앨범</h2>
+        <div
+          style={{
+            marginBottom: "10px",
+            textAlign: "center",
+            fontSize: "14px",
+            color: "#666",
+          }}
+        >
+          총 <strong>{photos.length}</strong>장의 사진
+        </div>
+
         <Swiper
           modules={[Navigation]}
           spaceBetween={10}
@@ -58,37 +103,88 @@ function PhotoGallery({ photos }) {
           }}
           style={{ padding: "20px 0", height: "300px" }}
         >
-          {photos.map((photo, index) => (
-            <SwiperSlide key={index}>
-              <div
-                className="gallery-item"
-                onClick={() => openModal(photo)}
-                style={{ cursor: "pointer" }}
-              >
-                <img
-                  src={photo.thumbnailUrl || photo.url}
-                  alt={photo.alt}
-                  className="gallery-image"
-                  loading="lazy"
+          {photos.map((photo, index) => {
+            const hasError = imageErrors.has(photo.id);
+            const imageUrl = photo.thumbnailUrl || photo.url;
+
+            return (
+              <SwiperSlide key={photo.id || index}>
+                <div
+                  className="gallery-item"
+                  onClick={() => !hasError && openModal(photo)}
                   style={{
-                    width: "100%",
-                    height: "250px",
-                    objectFit: "cover",
-                    borderRadius: "10px",
-                    transition: "transform 0.3s ease, filter 0.3s ease",
+                    cursor: hasError ? "default" : "pointer",
+                    position: "relative",
                   }}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = "scale(1.05)";
-                    e.target.style.filter = "brightness(1.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = "scale(1)";
-                    e.target.style.filter = "brightness(1)";
-                  }}
-                />
-              </div>
-            </SwiperSlide>
-          ))}
+                >
+                  {hasError ? (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "250px",
+                        backgroundColor: "#f5f5f5",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "10px",
+                        border: "2px dashed #ddd",
+                      }}
+                    >
+                      <div style={{ textAlign: "center", color: "#999" }}>
+                        <div style={{ fontSize: "30px", marginBottom: "10px" }}>
+                          📷
+                        </div>
+                        <div>이미지 로드 실패</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={imageUrl}
+                      alt={
+                        photo.alt || photo.name || `다인이 사진 ${index + 1}`
+                      }
+                      className="gallery-image"
+                      loading="lazy"
+                      onLoad={() => handleImageLoad(photo.id)}
+                      onError={() => handleImageError(photo.id, imageUrl)}
+                      style={{
+                        width: "100%",
+                        height: "250px",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                        transition: "transform 0.3s ease, filter 0.3s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = "scale(1.05)";
+                        e.target.style.filter = "brightness(1.1)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = "scale(1)";
+                        e.target.style.filter = "brightness(1)";
+                      }}
+                    />
+                  )}
+
+                  {/* 월 표시 배지 */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "5px",
+                      left: "5px",
+                      backgroundColor: "rgba(255, 105, 180, 0.8)",
+                      color: "white",
+                      padding: "2px 8px",
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {photo.month}월
+                  </div>
+                </div>
+              </SwiperSlide>
+            );
+          })}
         </Swiper>
 
         <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
@@ -127,7 +223,11 @@ function PhotoGallery({ photos }) {
           >
             <img
               src={selectedImage.fullUrl || selectedImage.url}
-              alt={selectedImage.alt}
+              alt={selectedImage.alt || selectedImage.name}
+              onError={(e) => {
+                console.error("모달 이미지 로드 실패:", selectedImage);
+                e.target.src = selectedImage.url; // fallback to original URL
+              }}
               style={{
                 width: "100%",
                 height: "auto",
@@ -157,6 +257,23 @@ function PhotoGallery({ photos }) {
             >
               ×
             </button>
+
+            {/* 사진 정보 표시 */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-50px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                padding: "8px 16px",
+                borderRadius: "20px",
+                fontSize: "14px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {selectedImage.month}월 • {selectedImage.name || "다인이 사진"}
+            </div>
           </div>
         </div>
       )}

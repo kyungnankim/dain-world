@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const fortunes = [
   "오늘은 세상에서 가장 맛있는 맘마를 먹게 될 거예요! 🍼",
@@ -152,43 +152,191 @@ const fortunes = [
   "다인이의 작은 발이 세상을 향해 나아갑니다.",
   "작은 두 손으로 사랑을 전하는 방법을 배워요.",
 ];
-
-const TodayFortune = ({ photos }) => {
+const TodayFortune = ({ photos = [] }) => {
   const [fortune, setFortune] = useState(
     "버튼을 눌러 오늘의 운세를 확인하세요!"
   );
   const [fortuneImageUrl, setFortuneImageUrl] = useState(
     "https://ik.imagekit.io/duixwrddg/default-dain-world/default.png"
   );
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    console.log("TodayFortune - 받은 사진 개수:", photos.length);
+  }, [photos]);
 
   const showFortune = () => {
+    // 랜덤 운세 선택
     const randomFortuneIndex = Math.floor(Math.random() * fortunes.length);
-    setFortune(fortunes[randomFortuneIndex]);
+    const selectedFortune = fortunes[randomFortuneIndex];
+    setFortune(selectedFortune);
 
+    // 사진이 있으면 랜덤 사진 선택
     if (photos && photos.length > 0) {
       const randomPhoto = photos[Math.floor(Math.random() * photos.length)];
-      setFortuneImageUrl(randomPhoto.url);
+      console.log("선택된 운세 사진:", randomPhoto);
+
+      setSelectedPhoto(randomPhoto);
+      // fortuneUrl이 있으면 사용, 없으면 thumbnailUrl, 그것도 없으면 url 사용
+      const imageUrl =
+        randomPhoto.fortuneUrl || randomPhoto.thumbnailUrl || randomPhoto.url;
+      setFortuneImageUrl(imageUrl);
+      setImageError(false);
+    } else {
+      console.log("사진이 없어서 기본 이미지 사용");
+      setSelectedPhoto(null);
+      setFortuneImageUrl(
+        "https://ik.imagekit.io/duixwrddg/default-dain-world/default.png"
+      );
+      setImageError(false);
     }
+  };
+
+  const handleImageError = (e) => {
+    console.error("운세 이미지 로드 실패:", fortuneImageUrl);
+    setImageError(true);
+
+    // fallback 순서: selectedPhoto의 다른 URL들 시도
+    if (selectedPhoto) {
+      if (e.target.src !== selectedPhoto.url) {
+        e.target.src = selectedPhoto.url;
+        return;
+      }
+      if (
+        e.target.src !== selectedPhoto.thumbnailUrl &&
+        selectedPhoto.thumbnailUrl
+      ) {
+        e.target.src = selectedPhoto.thumbnailUrl;
+        return;
+      }
+    }
+
+    // 최종 fallback
+    e.target.src =
+      "https://ik.imagekit.io/duixwrddg/default-dain-world/default.png";
+  };
+
+  const handleImageLoad = () => {
+    console.log("운세 이미지 로드 성공:", fortuneImageUrl);
+    setImageError(false);
   };
 
   return (
     <div className="card fortune-card">
       <h2>✨ 다인이의 오늘의 운세 ✨</h2>
-      <img
-        key={fortuneImageUrl}
-        src={fortuneImageUrl}
-        alt="다인이 운세 사진"
-        className="fortune-img"
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src =
-            "https://ik.imagekit.io/duixwrddg/default-dain-world/default.png";
+
+      {/* 사진 개수 표시 */}
+      {photos.length > 0 && (
+        <div
+          style={{
+            textAlign: "center",
+            fontSize: "12px",
+            color: "#666",
+            marginBottom: "10px",
+          }}
+        >
+          {photos.length}장의 사진 중에서 랜덤 선택
+        </div>
+      )}
+
+      <div style={{ position: "relative", display: "inline-block" }}>
+        {imageError ? (
+          <div
+            style={{
+              width: "200px",
+              height: "200px",
+              backgroundColor: "#f5f5f5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "10px",
+              border: "2px dashed #ddd",
+              margin: "0 auto",
+            }}
+          >
+            <div style={{ textAlign: "center", color: "#999" }}>
+              <div style={{ fontSize: "40px", marginBottom: "10px" }}>📷</div>
+              <div>이미지 로드 실패</div>
+            </div>
+          </div>
+        ) : (
+          <img
+            key={fortuneImageUrl} // key를 추가하여 이미지 변경시 리렌더링 보장
+            src={fortuneImageUrl}
+            alt="다인이 운세 사진"
+            className="fortune-img"
+            onError={handleImageError}
+            onLoad={handleImageLoad}
+            style={{
+              maxWidth: "200px",
+              maxHeight: "200px",
+              objectFit: "cover",
+              borderRadius: "10px",
+              border: "3px solid #ff69b4",
+              boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+            }}
+          />
+        )}
+
+        {/* 월 정보 표시 */}
+        {selectedPhoto && (
+          <div
+            style={{
+              position: "absolute",
+              top: "5px",
+              right: "5px",
+              backgroundColor: "rgba(255, 105, 180, 0.9)",
+              color: "white",
+              padding: "4px 8px",
+              borderRadius: "12px",
+              fontSize: "12px",
+              fontWeight: "bold",
+            }}
+          >
+            {selectedPhoto.month}월
+          </div>
+        )}
+      </div>
+
+      <div
+        id="fortune-text"
+        style={{
+          margin: "20px 0",
+          padding: "15px",
+          backgroundColor: "#fff8f0",
+          borderRadius: "10px",
+          border: "2px solid #ffd700",
+          fontSize: "16px",
+          lineHeight: "1.5",
+          textAlign: "center",
         }}
-      />
-      <div id="fortune-text">{fortune}</div>
+      >
+        {fortune}
+      </div>
+
       <button onClick={showFortune} className="fortune-btn">
-        운세 보기
+        {photos.length > 0 ? "운세 보기 🔮" : "운세 보기 (사진 없음)"}
       </button>
+
+      {/* 사진이 없을 때 안내 메시지 */}
+      {photos.length === 0 && (
+        <div
+          style={{
+            marginTop: "15px",
+            padding: "10px",
+            backgroundColor: "#f0f8ff",
+            borderRadius: "8px",
+            fontSize: "14px",
+            color: "#666",
+            textAlign: "center",
+          }}
+        >
+          📸 월별 갤러리에서 사진을 추가하면
+          <br />
+          다인이 사진과 함께 운세를 볼 수 있어요!
+        </div>
+      )}
     </div>
   );
 };
