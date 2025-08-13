@@ -1,4 +1,4 @@
-// 파일 상단에 필요한 것들을 import 합니다.
+// App.jsx - 최종 수정본
 import React, { useState } from "react";
 import "./App.css";
 import Welcome from "./components/Welcome";
@@ -7,10 +7,12 @@ import Anniversary from "./components/Anniversary";
 import Doljanchi from "./components/Doljanchi";
 import PhotoGallery from "./components/PhotoGallery";
 import TodayFortune from "./components/TodayFortune";
-import FeedingGame from "./components/FeedingGame"; // ◀◀◀ 새로 만든 게임 컴포넌트 import
+import FeedingGame from "./components/FeedingGame";
+import FloatingButtons from "./components/FloatingButtons";
+import VideoGallery from "./components/VideoGallery";
+import MonthlyPhotos from "./components/MonthlyPhotos";
 
-// ... (기존 ImageKit.io 및 dainPhotos 설정 코드는 그대로 둡니다)
-
+// ImageKit.io 및 dainPhotos 설정
 const IMAGEKIT_URL_ENDPOINT = "https://ik.imagekit.io/duixwrddg";
 const totalPhotos = 150;
 const dainPhotos = [];
@@ -30,10 +32,9 @@ const dainInfo = {
   dolPartyDate: "2025-09-13",
 };
 
-// App 함수를 아래와 같이 수정합니다.
 function App() {
   const [showWelcome, setShowWelcome] = useState(true);
-  const [showGame, setShowGame] = useState(false); // ◀◀◀ 게임 화면 표시 여부 상태 추가
+  const [currentView, setCurrentView] = useState("main"); // 'main', 'game', 'video', 'monthly'
 
   const isMobile = () => window.innerWidth <= 768;
 
@@ -41,49 +42,69 @@ function App() {
     setShowWelcome(false);
   };
 
-  // 게임 화면을 보여주는 함수
-  const handleShowGame = () => {
-    setShowGame(true);
+  // --- 네비게이션 함수들 (빠진 부분 추가) ---
+  const showGame = () => setCurrentView("game");
+  const showVideo = () => setCurrentView("video");
+  const showMonthlyPhotos = () => setCurrentView("monthly");
+  const showMain = () => setCurrentView("main");
+
+  // 현재 뷰에 따른 렌더링
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case "game":
+        return <FeedingGame onBack={showMain} />;
+
+      case "video":
+        return <VideoGallery onBack={showMain} />;
+
+      case "monthly":
+        return <MonthlyPhotos onBack={showMain} photos={dainPhotos} />;
+
+      case "main":
+      default:
+        return (
+          <>
+            {showWelcome && isMobile() && (
+              <Welcome
+                partyDate={dainInfo.dolPartyDate}
+                onEnter={handleEnterSite}
+              />
+            )}
+            <div className="container">
+              <h1>♡ 최다인 월드 ♡</h1>
+              <Profile birthday={dainInfo.birthday} />
+              <Anniversary birthday={dainInfo.birthday} />
+              <Doljanchi partyDate={dainInfo.dolPartyDate} />
+              <div
+                className="card"
+                style={{ marginTop: "40px", backgroundColor: "#fff0f5" }}
+              >
+                <h2>✨ 다인이 맘마주기 게임 ✨</h2>
+                <p>다인이에게 맛있는 맘마를 주세요!</p>
+                <button className="fortune-btn" onClick={showGame}>
+                  게임 시작하기
+                </button>
+              </div>
+              <PhotoGallery photos={dainPhotos} />
+              <TodayFortune photos={dainPhotos} />
+            </div>
+          </>
+        );
+    }
   };
 
-  // 메인 화면으로 돌아오는 함수
-  const handleBackToMain = () => {
-    setShowGame(false);
-  };
-
-  // 만약 게임 화면이 보여야 한다면 게임 컴포넌트만 렌더링합니다.
-  if (showGame) {
-    return <FeedingGame onBack={handleBackToMain} />;
-  }
-
+  // --- 최종 return 문 (빠진 부분 추가) ---
   return (
     <>
-      {showWelcome && isMobile() && (
-        <Welcome partyDate={dainInfo.dolPartyDate} onEnter={handleEnterSite} />
-      )}
+      {/* 화면 전환이 일어나는 부분 */}
+      {renderCurrentView()}
 
-      <div className="container">
-        <h1>♡ 최다인 월드 ♡</h1>
-
-        <Profile birthday={dainInfo.birthday} />
-        <Anniversary birthday={dainInfo.birthday} />
-        <Doljanchi partyDate={dainInfo.dolPartyDate} />
-
-        {/* ◀◀◀ 여기에 게임하기 버튼 섹션을 추가합니다. */}
-        <div
-          className="card"
-          style={{ marginTop: "40px", backgroundColor: "#fff0f5" }}
-        >
-          <h2>✨ 다인이 맘마주기 게임 ✨</h2>
-          <p>다인이에게 맛있는 맘마를 주세요!</p>
-          <button className="fortune-btn" onClick={handleShowGame}>
-            게임 시작하기
-          </button>
-        </div>
-
-        <PhotoGallery photos={dainPhotos} />
-        <TodayFortune photos={dainPhotos} />
-      </div>
+      {/* FloatingButtons를 여기에 두면 어떤 화면에서도 항상 보입니다. */}
+      <FloatingButtons
+        onGoToMain={showMain}
+        onVideoClick={showVideo}
+        onMonthlyPhotosClick={showMonthlyPhotos}
+      />
     </>
   );
 }

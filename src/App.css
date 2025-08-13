@@ -1,14 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap");
 
-/* --- 기본 body 스타일 --- */
+/* === 기존 기본 스타일들 === */
 body {
   font-family: "Gowun Dodum", sans-serif;
   color: #5d4037;
   margin: 0;
-  /* ✨ body의 배경색을 제거했습니다. 배경은 아래 floating-image-container가 담당합니다. */
 }
 
-/* --- 떠다니는 이미지 배경 --- */
 .floating-image-container {
   position: fixed;
   top: 0;
@@ -16,9 +14,7 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  /* ✨ z-index를 -1로 설정하여 다른 모든 콘텐츠의 뒤로 보냅니다. */
   z-index: -1;
-  /* ✨ 연한 핑크 배경색을 여기서 담당합니다. */
   background-color: #fff0f5;
 }
 
@@ -33,7 +29,6 @@ body {
   animation-timing-function: ease-in-out;
 }
 
-/* 둥둥 떠다니는 애니메이션 효과 */
 @keyframes float {
   0% {
     transform: translateY(0px) rotate(0deg);
@@ -46,7 +41,6 @@ body {
   }
 }
 
-/* --- 메인 콘텐츠 스타일 --- */
 #root {
   width: 100%;
   display: flex;
@@ -57,7 +51,6 @@ body {
 .container {
   max-width: 800px;
   width: 95%;
-  /* 배경이 뒤로 갔으므로 z-index와 position이 더 이상 필요 없습니다. */
   background-color: rgba(255, 255, 255, 0.92);
   padding: 20px;
   border-radius: 15px;
@@ -152,11 +145,12 @@ h2 {
 .fortune-btn:hover {
   background-color: #e91e63;
 }
+
 .swiper {
   overscroll-behavior-y: contain;
 }
-/* Welcome 모바일 전용 오버레이 - App.css에 추가 */
 
+/* Welcome 모바일 전용 오버레이 */
 .welcome-overlay {
   position: fixed;
   top: 0;
@@ -164,7 +158,7 @@ h2 {
   width: 100vw;
   height: 100vh;
   background: linear-gradient(135deg, #fff0f5 0%, #fce4ec 50%, #f8bbd9 100%);
-  display: none; /* 기본적으로 숨김 */
+  display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -174,7 +168,6 @@ h2 {
   overflow-y: auto;
 }
 
-/* 모바일에서만 표시 */
 @media (max-width: 768px) {
   .welcome-overlay {
     display: flex;
@@ -333,7 +326,6 @@ h2 {
   }
 }
 
-/* 작은 모바일 화면 최적화 */
 @media (max-width: 480px) {
   .welcome-modal {
     padding: 25px 15px;
@@ -359,11 +351,9 @@ h2 {
     font-size: 1em;
   }
 }
-/* ... App.css 파일의 맨 아래에 추가 ... */
 
-/* 게임 시작 버튼을 위한 추가 스타일 */
 .game-start-btn {
-  background-color: #e91e63; /* 메인 테마 색상 */
+  background-color: #e91e63;
   color: white;
   border: none;
   padding: 12px 25px;
@@ -377,7 +367,1254 @@ h2 {
 }
 
 .game-start-btn:hover {
-  background-color: #ff80ab; /* 호버 시 색상 변경 */
+  background-color: #ff80ab;
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* === 새로 추가된 스타일들 === */
+
+/* App.css */
+
+/* === 플로팅 버튼 스타일 === */
+.floating-buttons {
+  position: fixed; /* 화면에 고정 */
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column; /* 버튼을 세로로 정렬 */
+  gap: 15px; /* 버튼 사이의 간격 */
+  z-index: 1000; /* 다른 요소들 위에 보이도록 설정 */
+}
+
+.floating-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.8em; /* 이모지 크기 */
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* 이모지 색상을 흰색으로 */
+}
+
+.floating-btn:hover {
+  transform: translateY(-3px) scale(1.1); /* 호버 시 약간 확대 및 이동 */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* 메인으로 이동 버튼 스타일 (신규) */
+.go-main-btn {
+  background: linear-gradient(135deg, #2196f3, #3f51b5);
+}
+
+/* 월별 사진 갤러리 버튼 스타일 (신규) */
+.monthly-photos-btn {
+  background: linear-gradient(135deg, #9c27b0, #673ab7);
+}
+
+/* 동영상 갤러리 버튼 스타일 */
+.video-btn {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+}
+
+/* 맨 위로 스크롤 버튼 스타일 */
+.scroll-top-btn {
+  background: linear-gradient(135deg, #e91e63, #ff80ab);
+}
+
+/* 동영상 갤러리 스타일 */
+.video-gallery-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #fff0f5;
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.video-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.video-title {
+  color: #e91e63;
+  margin: 0;
+  font-size: 1.8em;
+}
+
+/* 월별 네비게이션 */
+.monthly-nav {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.monthly-nav h2 {
+  color: #e91e63;
+  text-align: center;
+  margin-bottom: 20px;
+  border: none;
+  padding: 0;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 15px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.month-btn {
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: 15px;
+  padding: 15px 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  font-family: "Gowun Dodum", sans-serif;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.month-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  border-color: #e91e63;
+}
+
+.month-emoji {
+  font-size: 1.5em;
+  margin-bottom: 5px;
+}
+
+.month-name {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #5d4037;
+}
+
+/* 동영상 그리드 */
+.video-content {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.video-item {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.video-item:hover {
+  transform: translateY(-5px);
+}
+
+.video-thumbnail {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3em;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.video-thumbnail:hover .play-button {
+  opacity: 1;
+}
+
+.video-info {
+  padding: 15px;
+}
+
+.video-info h3 {
+  margin: 0 0 10px 0;
+  color: #e91e63;
+  font-size: 1.1em;
+}
+
+.video-info p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.no-videos {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+/* 동영상 모달 */
+.video-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.video-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.video-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2em;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.modal-video {
+  width: 100%;
+  max-height: 70vh;
+}
+
+.video-modal-info {
+  padding: 15px;
+  text-align: center;
+}
+
+/* 월별 사진 갤러리 스타일 */
+.monthly-photos-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #fff0f5;
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.monthly-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.monthly-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.monthly-title h1 {
+  color: #e91e63;
+  margin: 0;
+  font-size: 1.8em;
+}
+
+.month-emoji-large {
+  font-size: 2em;
+}
+
+.upload-btn {
+  background: linear-gradient(135deg, #ff80ab, #e91e63);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-family: "Gowun Dodum", sans-serif;
+  font-size: 1em;
+  transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(233, 30, 99, 0.3);
+}
+
+.monthly-content {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.photo-item {
+  position: relative;
+  cursor: pointer;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.photo-item:hover {
+  transform: scale(1.05);
+}
+
+.photo-thumbnail {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.photo-date {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  font-size: 0.8em;
+}
+
+.no-photos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.no-photos-content {
+  text-align: center;
+  color: #666;
+}
+
+.no-photos-emoji {
+  font-size: 4em;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.no-photos-content h3 {
+  color: #e91e63;
+  margin-bottom: 10px;
+}
+
+/* 사진 모달 */
+.photo-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.photo-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.photo-close-btn {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modal-photo {
+  width: 100%;
+  height: auto;
+  max-width: 600px;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.photo-modal-info {
+  text-align: center;
+  color: white;
+  margin-top: 10px;
+}
+
+/* 사진 업로드 스타일 */
+.photo-upload-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #fff0f5;
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.upload-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.upload-header h1 {
+  color: #e91e63;
+  margin: 0;
+  font-size: 1.8em;
+}
+
+.upload-method-selector {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.upload-method-selector h3 {
+  color: #e91e63;
+  margin-bottom: 15px;
+}
+
+.method-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.method-options label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.method-options label:hover {
+  background-color: rgba(233, 30, 99, 0.1);
+}
+
+.file-selector {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-input-label {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff80ab, #e91e63);
+  color: white;
+  padding: 15px 30px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1.1em;
+  transition: all 0.3s ease;
+  font-family: "Gowun Dodum", sans-serif;
+}
+
+.file-input-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(233, 30, 99, 0.3);
+}
+
+.file-hint {
+  margin-top: 10px;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.preview-section {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preview-section h3 {
+  color: #e91e63;
+  margin-bottom: 15px;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.preview-item {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preview-item img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.preview-info {
+  padding: 10px;
+  background: white;
+}
+
+.file-name {
+  font-size: 0.8em;
+  margin: 0 0 5px 0;
+  word-break: break-all;
+}
+
+.file-size {
+  font-size: 0.7em;
+  color: #666;
+  margin: 0;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+
+.upload-section {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.upload-btn-main {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1.1em;
+  cursor: pointer;
+  font-family: "Gowun Dodum", sans-serif;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+}
+
+.upload-btn-main:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.3);
+}
+
+.upload-btn-main:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.upload-progress {
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: #f0f0f0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  transition: width 0.3s ease;
+}
+
+.upload-tips {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.upload-tips h3 {
+  color: #e91e63;
+  margin-bottom: 15px;
+}
+
+.upload-tips ul {
+  text-align: left;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.upload-tips li {
+  margin-bottom: 8px;
+  color: #5d4037;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .floating-buttons {
+    bottom: 15px;
+    right: 15px;
+  }
+
+  .floating-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2em;
+  }
+
+  .month-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+
+  .photos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .preview-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .monthly-header,
+  .upload-header,
+  .video-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .monthly-title {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .monthly-title h1,
+  .upload-header h1,
+  .video-title {
+    font-size: 1.5em;
+  }
+}
+/* === 월별 사진 갤러리 (MonthlyPhotos) 공통 스타일 === */
+.monthly-photos-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #fff0f5;
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.monthly-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.monthly-title {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+.monthly-title h1 {
+  color: #e91e63;
+  margin: 0;
+  font-size: 1.8em;
+}
+
+.month-emoji-large {
+  font-size: 2em;
+}
+
+.monthly-content {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gallery-description {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* === 컴팩트 월별 카드 그리드 (2x6 레이아웃) === */
+.compact-months-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  max-width: 500px;
+  margin: 0 auto 30px auto;
+  padding: 0 10px;
+}
+
+.compact-month-card {
+  position: relative;
+  border-radius: 8px;
+  padding: 8px 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 2px solid transparent;
+  color: white;
+}
+
+.compact-month-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.compact-month-card.selected {
+  border-color: #e91e63;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 15px rgba(233, 30, 99, 0.3);
+}
+
+.compact-month-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.compact-month-emoji {
+  font-size: 1.2em;
+}
+
+.compact-month-name {
+  font-size: 0.7em;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2px;
+  line-height: 1;
+}
+
+.compact-photo-count {
+  font-size: 0.6em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.selected-indicator {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: #e91e63;
+  color: white;
+  border-radius: 50%;
+  width: 15px;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6em;
+  font-weight: bold;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* === 월 선택 후 사진 표시 영역 === */
+.selected-month-photos {
+  background: #fff;
+  border-radius: 20px;
+  padding: 30px;
+  margin-top: 25px;
+  box-shadow: 0 6px 20px rgba(233, 30, 99, 0.1);
+}
+
+.selected-month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.selected-month-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.selected-month-emoji {
+  font-size: 2em;
+}
+
+.selected-month-info h3 {
+  color: #e91e63;
+  margin: 0;
+  font-size: 1.4em;
+}
+
+.selected-photo-count {
+  background: linear-gradient(135deg, #e91e63, #ff80ab);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.upload-btn-compact {
+  background: linear-gradient(135deg, #ff80ab, #e91e63);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: "Gowun Dodum", sans-serif;
+  font-size: 0.95em;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.upload-btn-compact:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(233, 30, 99, 0.3);
+}
+
+.selected-month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.selected-photo-item {
+  position: relative;
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  background: #f5f5f5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.selected-photo-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.selected-photo-thumbnail {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.selected-photo-date {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 10px;
+  font-size: 0.8em;
+  text-align: center;
+}
+
+.no-selected-photos {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.no-photos-emoji-large {
+  font-size: 4em;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.no-selected-photos h4 {
+  color: #e91e63;
+  margin-bottom: 10px;
+}
+
+/* === 월 선택 전 안내 & 통계 === */
+.no-month-selected {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.selection-guide {
+  margin-bottom: 40px;
+}
+
+.guide-emoji {
+  font-size: 3em;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.selection-guide h3 {
+  color: #e91e63;
+  font-size: 1.3em;
+  margin-bottom: 15px;
+}
+
+.gallery-stats-compact {
+  background: rgba(233, 30, 99, 0.1);
+  border-radius: 15px;
+  padding: 25px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.stats-compact {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
+
+.stat-item-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-number-compact {
+  font-size: 2em;
+  font-weight: bold;
+  color: #e91e63;
+  margin-bottom: 5px;
+}
+
+.stat-label-compact {
+  color: #666;
+  font-size: 0.85em;
+}
+
+/* === 사진 모달 === */
+.photo-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.photo-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.photo-close-btn {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modal-photo {
+  width: 100%;
+  height: auto;
+  max-width: 600px;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.photo-modal-info {
+  text-align: center;
+  color: white;
+  margin-top: 10px;
+}
+
+/* === 반응형 스타일 === */
+@media (max-width: 768px) {
+  .monthly-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  .monthly-title {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .monthly-title h1 {
+    font-size: 1.5em;
+  }
+
+  .compact-months-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    max-width: 100%;
+  }
+
+  .compact-month-card {
+    padding: 6px 4px;
+    min-height: 50px;
+  }
+
+  .compact-month-emoji {
+    font-size: 1em;
+  }
+
+  .compact-month-name {
+    font-size: 0.6em;
+  }
+
+  .compact-photo-count {
+    font-size: 0.5em;
+  }
+
+  .selected-month-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .selected-month-info h3 {
+    color: #e91e63;
+    margin: 0;
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 480px) {
+  .compact-months-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+  }
+
+  .compact-month-card {
+    padding: 4px 2px;
+    min-height: 40px;
+    border-radius: 6px;
+  }
+
+  .compact-month-emoji {
+    font-size: 0.8em;
+  }
+
+  .selected-month-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .selected-photo-thumbnail {
+    height: 120px;
+  }
+}
+/* src/App.css */
+
+/* --- PhotoUpload 컴포넌트 관련 스타일 --- */
+
+/* 비밀번호 입력 섹션 */
+.password-prompt-section {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.password-prompt-section h3 {
+  color: #e91e63;
+  margin-bottom: 20px;
+}
+
+.password-input {
+  display: block;
+  width: 80%;
+  max-width: 250px;
+  margin: 0 auto 15px auto;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 1em;
+  font-family: "Gowun Dodum", sans-serif;
+  transition: border-color 0.3s;
+}
+
+.password-input:focus {
+  outline: none;
+  border-color: #e91e63;
+}
+
+/* 사진 교체(삭제) 섹션 */
+.replacement-section {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.replacement-section h3 {
+  color: #e91e63;
+  margin-top: 0;
+}
+
+/* 삭제 모드일 때의 사진 아이템 */
+.preview-grid.deletion-mode .preview-item.selectable {
+  cursor: pointer;
+  position: relative;
+}
+
+.preview-grid.deletion-mode .preview-item .selection-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.5);
+  color: #e91e63;
+  font-size: 3em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-weight: bold;
+}
+
+.preview-grid.deletion-mode
+  .preview-item.selected-for-deletion
+  .selection-overlay {
+  opacity: 1;
+}
+
+/* 삭제 제어 버튼들 */
+.deletion-controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.delete-btn {
+  background-color: #f44336; /* 빨간색 배경 */
+}
+
+.delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+.delete-btn:disabled {
+  background-color: #e0e0e0;
+  cursor: not-allowed;
 }
