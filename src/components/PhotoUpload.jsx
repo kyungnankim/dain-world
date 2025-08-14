@@ -387,6 +387,7 @@ function PhotoUpload({
                 }}
               >
                 선택한 사진 삭제 ({photosToDelete.size}장)
+                {needsDelete && photosToDelete.size > 0 && " 🔥"}
               </button>
             </div>
           </>

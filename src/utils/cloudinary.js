@@ -1,6 +1,3 @@
-// src/utils/cloudinary.js - 수정된 버전
-
-// ✅ 전체 사진 가져오기
 export const getAllPhotos = async () => {
   try {
     console.log("🔍 getAllPhotos 함수 호출됨");
@@ -32,7 +29,6 @@ export const getAllPhotos = async () => {
   }
 };
 
-// ✅ 월별 사진 가져오기
 export const getMonthlyPhotos = async (month) => {
   try {
     console.log(`🔍 getMonthlyPhotos 호출됨 - ${month}월`);
@@ -63,7 +59,6 @@ export const getMonthlyPhotos = async (month) => {
   }
 };
 
-// ✅ 사진 업로드
 export const uploadPhotos = async (files, month) => {
   try {
     console.log(`📤 사진 업로드 시작 - ${month}월, ${files.length}개 파일`);
@@ -102,7 +97,6 @@ export const uploadPhotos = async (files, month) => {
   }
 };
 
-// ✅ 사진 삭제
 export const deletePhotos = async (photoIds) => {
   try {
     console.log("🗑️ 사진 삭제 시작:", photoIds);

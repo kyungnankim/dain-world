@@ -450,7 +450,7 @@ const MonthlyPhotos = ({
                   {months.find((m) => m.month === selectedMonth)?.name}에는 아직
                   사진이 없어요
                 </h4>
-                <p>첫 번째 사진을 Cloudinary에 업로드해보세요!</p>
+                <p>첫 번째 사진을 업로드해보세요!</p>
                 <button
                   className="fortune-btn"
                   onClick={() => {
