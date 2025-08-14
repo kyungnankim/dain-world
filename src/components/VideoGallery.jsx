@@ -177,27 +177,59 @@ const VideoGallery = ({ onBack }) => {
               cc_load_policy: 0,
               iv_load_policy: 3,
               autohide: 0,
-              vq: "hd1080", // 화질 설정
+              vq: "hd1080",
+              hd: 1,
+              quality: "hd1080",
+              suggestedQuality: "hd1080",
             },
             events: {
               onReady: (event) => {
-                // 플레이어가 준비되면 화질을 1080p로 설정
-                const availableQualities =
-                  event.target.getAvailableQualityLevels();
-                if (availableQualities.includes("hd1080")) {
-                  event.target.setPlaybackQuality("hd1080");
-                } else if (availableQualities.includes("hd720")) {
-                  event.target.setPlaybackQuality("hd720");
-                }
+                // 여러 방법으로 화질 설정 시도
+                setTimeout(() => {
+                  try {
+                    const player = event.target;
+                    const availableQualities =
+                      player.getAvailableQualityLevels();
+                    console.log("Available qualities:", availableQualities);
+
+                    // 1080p 시도
+                    if (availableQualities.includes("hd1080")) {
+                      player.setPlaybackQuality("hd1080");
+                      console.log("Set to 1080p");
+                    }
+                    // 720p 시도
+                    else if (availableQualities.includes("hd720")) {
+                      player.setPlaybackQuality("hd720");
+                      console.log("Set to 720p");
+                    }
+                    // large (480p) 시도
+                    else if (availableQualities.includes("large")) {
+                      player.setPlaybackQuality("large");
+                      console.log("Set to 480p");
+                    }
+                  } catch (error) {
+                    console.log("Quality setting failed:", error);
+                  }
+                }, 1000);
               },
               onStateChange: (event) => {
-                // 재생 시작 시 화질 재설정
-                if (event.data === window.YT.PlayerState.PLAYING) {
-                  const availableQualities =
-                    event.target.getAvailableQualityLevels();
-                  if (availableQualities.includes("hd1080")) {
-                    event.target.setPlaybackQuality("hd1080");
-                  }
+                // 재생 시작, 일시정지 해제 시 화질 재설정
+                if (
+                  event.data === window.YT.PlayerState.PLAYING ||
+                  event.data === window.YT.PlayerState.BUFFERING
+                ) {
+                  setTimeout(() => {
+                    try {
+                      const player = event.target;
+                      const availableQualities =
+                        player.getAvailableQualityLevels();
+                      if (availableQualities.includes("hd1080")) {
+                        player.setPlaybackQuality("hd1080");
+                      }
+                    } catch (error) {
+                      console.log("Quality re-setting failed:", error);
+                    }
+                  }, 500);
                 }
               },
             },
