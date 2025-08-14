@@ -1,8 +1,28 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import video48 from "../assets/IMG_2025081321224470.MOV";
 import video49 from "../assets/IMG_2025081321224483.MOV";
 
-// 안정성을 개선한 YouTube 플레이어 컴포넌트
+// 컴포넌트 외부로 썸네일 생성 함수를 분리하여 불필요한 재생성을 방지합니다.
+const createThumbnail = (videoSrc) => {
+  return new Promise((resolve, reject) => {
+    const videoElement = document.createElement("video");
+    videoElement.src = videoSrc;
+    videoElement.crossOrigin = "anonymous";
+    videoElement.onloadeddata = () => {
+      videoElement.currentTime = 1; // 1초 시점의 프레임 캡처
+    };
+    videoElement.onseeked = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg"));
+    };
+    videoElement.onerror = (err) => reject(err);
+  });
+};
+
 const YouTubePlayer = ({ videoId, onReady, onError }) => {
   const playerInstanceRef = useRef(null);
   const [playerId] = useState(
@@ -11,7 +31,6 @@ const YouTubePlayer = ({ videoId, onReady, onError }) => {
 
   useEffect(() => {
     if (!window.YT || !window.YT.Player) return;
-
     const cleanup = () => {
       if (
         playerInstanceRef.current &&
@@ -21,9 +40,7 @@ const YouTubePlayer = ({ videoId, onReady, onError }) => {
         playerInstanceRef.current = null;
       }
     };
-
     cleanup();
-
     playerInstanceRef.current = new window.YT.Player(playerId, {
       videoId: videoId,
       width: "100%",
@@ -39,7 +56,6 @@ const YouTubePlayer = ({ videoId, onReady, onError }) => {
       },
       events: { onReady, onError },
     });
-
     return cleanup;
   }, [videoId, playerId, onReady, onError]);
 
@@ -52,10 +68,11 @@ const YouTubePlayer = ({ videoId, onReady, onError }) => {
 
 const VideoGallery = ({ onBack }) => {
   const [playingVideoId, setPlayingVideoId] = useState(null);
-  // *** 로컬 비디오 썸네일을 저장할 상태 추가 ***
   const [localThumbnails, setLocalThumbnails] = useState({});
+  const observer = useRef(null);
 
   const allVideos = [
+    // ... (기존 비디오 데이터는 생략)
     {
       id: 1,
       type: "youtube",
@@ -434,8 +451,6 @@ const VideoGallery = ({ onBack }) => {
       date: "2025-03-25",
       description: "다인이의 새로운 순간을 담은 영상입니다.",
     },
-
-    // 로컬 비디오 목록
     {
       id: 48,
       type: "local",
@@ -454,48 +469,52 @@ const VideoGallery = ({ onBack }) => {
     },
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+  // *** 썸네일 지연 생성을 위한 IntersectionObserver 설정 ***
   useEffect(() => {
-    const loadYouTubeAPI = () => {
-      if (!document.getElementById("youtube-api")) {
-        const script = document.createElement("script");
-        script.id = "youtube-api";
-        script.src = "https://www.youtube.com/iframe_api";
-        script.async = true;
-        document.head.appendChild(script);
-        window.onYouTubeIframeAPIReady = () =>
-          console.log("YouTube API loaded");
-      }
-    };
-    loadYouTubeAPI();
-
-    // *** 로컬 비디오 썸네일 생성 로직 ***
-    const createThumbnail = (video, id) => {
-      return new Promise((resolve) => {
-        const videoElement = document.createElement("video");
-        videoElement.src = video;
-        videoElement.crossOrigin = "anonymous";
-        videoElement.onloadeddata = () => {
-          videoElement.currentTime = 1; // 1초 시점의 프레임 캡처
-        };
-        videoElement.onseeked = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = videoElement.videoWidth;
-          canvas.height = videoElement.videoHeight;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-          resolve({ id, thumb: canvas.toDataURL("image/jpeg") });
-        };
-      });
-    };
-
-    allVideos
-      .filter((v) => v.type === "local")
-      .forEach((v) => {
-        createThumbnail(v.localSrc, v.id).then(({ id, thumb }) => {
-          setLocalThumbnails((prev) => ({ ...prev, [id]: thumb }));
-        });
-      });
+    // YouTube API 스크립트는 한 번만 로드합니다.
+    if (!document.getElementById("youtube-api")) {
+      const script = document.createElement("script");
+      script.id = "youtube-api";
+      script.src = "https://www.youtube.com/iframe_api";
+      script.async = true;
+      document.head.appendChild(script);
+      window.onYouTubeIframeAPIReady = () => console.log("YouTube API loaded");
+    }
   }, []);
+
+  const localVideoCardRef = useCallback(
+    (node) => {
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const videoId = parseInt(entry.target.dataset.videoId, 10);
+              const videoSrc = entry.target.dataset.videoSrc;
+
+              // 이미 썸네일이 있거나 생성 중이면 실행하지 않음
+              if (localThumbnails[videoId] || !videoSrc) return;
+
+              // 관찰 중지 후 썸네일 생성
+              observer.current.unobserve(entry.target);
+              createThumbnail(videoSrc)
+                .then((thumb) => {
+                  setLocalThumbnails((prev) => ({ ...prev, [videoId]: thumb }));
+                })
+                .catch((err) =>
+                  console.error("Thumbnail creation failed:", err)
+                );
+            }
+          });
+        },
+        { rootMargin: "200px" }
+      );
+
+      if (node) observer.current.observe(node);
+    },
+    [localThumbnails]
+  ); // localThumbnails가 변경될 때 observer를 재설정하여 새 노드를 관찰
 
   const handlePlay = (id) => {
     setPlayingVideoId(playingVideoId === id ? null : id);
@@ -558,6 +577,10 @@ const VideoGallery = ({ onBack }) => {
         {allVideos.map((video) => (
           <div
             key={video.id}
+            // *** 로컬 비디오인 경우에만 ref와 data 속성을 추가하여 관찰 대상으로 지정 ***
+            ref={video.type === "local" ? localVideoCardRef : null}
+            data-video-id={video.id}
+            data-video-src={video.localSrc || ""}
             className="video-card"
             style={{
               backgroundColor: "white",
@@ -630,7 +653,6 @@ const VideoGallery = ({ onBack }) => {
                       width: "100%",
                       height: "100%",
                       cursor: "pointer",
-                      // *** 로컬 썸네일과 유튜브 썸네일을 조건부로 표시 ***
                       backgroundImage:
                         video.type === "youtube"
                           ? `url(https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg)`
@@ -658,11 +680,10 @@ const VideoGallery = ({ onBack }) => {
                         padding: "20px",
                         color: "white",
                         transition: "transform 0.2s",
-                        // 로컬 썸네일 생성 중에는 재생 버튼 숨김
                         display:
                           video.type === "local" && !localThumbnails[video.id]
                             ? "none"
-                            : "block",
+                            : "flex",
                       }}
                       onMouseOver={(e) =>
                         (e.currentTarget.style.transform = "scale(1.1)")
