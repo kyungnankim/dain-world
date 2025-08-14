@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 
 const CORRECT_PASSWORD = "0923"; // 삭제 비밀번호
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const MAX_PHOTOS_PER_MONTH = 3; // ✅ 월별 최대 사진 개수 제한
 
 function PhotoUpload({
   month,
@@ -20,7 +21,14 @@ function PhotoUpload({
   const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(0);
   const fileInputRef = useRef(null);
 
-  // Cloudinary URL 생성 헬퍼
+  // ✅ 업로드 가능 여부 계산
+  const canUpload = existingPhotos.length < MAX_PHOTOS_PER_MONTH;
+  const remainingSlots = Math.max(
+    0,
+    MAX_PHOTOS_PER_MONTH - existingPhotos.length
+  );
+  const needsDelete = existingPhotos.length >= MAX_PHOTOS_PER_MONTH;
+
   const generateCloudinaryUrl = (publicId, transformation = "") => {
     const baseUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload`;
     return `${baseUrl}${
@@ -28,11 +36,28 @@ function PhotoUpload({
     }/${publicId}`;
   };
 
-  // 파일 선택 처리
   const handleFileSelect = (e) => {
+    // ✅ 업로드 제한 체크
+    if (needsDelete) {
+      alert(
+        `❌ ${monthName}에는 최대 ${MAX_PHOTOS_PER_MONTH}장까지만 저장할 수 있습니다.\n먼저 기존 사진을 삭제해주세요.`
+      );
+      return;
+    }
+
     const files = Array.from(e.target.files).filter((f) =>
       f.type.startsWith("image/")
     );
+
+    // ✅ 선택한 파일 개수도 체크
+    const totalAfterUpload = existingPhotos.length + files.length;
+    if (totalAfterUpload > MAX_PHOTOS_PER_MONTH) {
+      alert(
+        `❌ ${MAX_PHOTOS_PER_MONTH}장 제한을 초과합니다.\n현재: ${existingPhotos.length}장, 선택: ${files.length}장\n최대 ${remainingSlots}장까지 선택할 수 있습니다.`
+      );
+      return;
+    }
+
     const newPreviews = files.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
@@ -58,66 +83,22 @@ function PhotoUpload({
     }, 1000);
   };
 
-  // 백엔드를 통한 업로드
-  /* 1장씩 업로드
   const handleUpload = async () => {
     if (previewImages.length === 0) return;
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("month", month);
-      previewImages.forEach((item) =>
-        formData.append("file", item.file, item.name)
+
+    // ✅ 업로드 직전 재체크
+    if (needsDelete) {
+      alert(
+        `❌ ${monthName}에는 최대 ${MAX_PHOTOS_PER_MONTH}장까지만 저장할 수 있습니다.\n먼저 기존 사진을 삭제해주세요.`
       );
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const result = await response.json();
-
-      if (!response.ok || !result.success)
-        throw new Error(result.error || "서버 업로드 실패");
-
-      const uploadedPhotos = result.photos.map((p) => ({
-        id: p.id,
-        url: p.url,
-        month: p.month,
-        name: p.name,
-        thumbnailUrl: generateCloudinaryUrl(
-          p.id,
-          "w_300,h_300,c_fill,q_auto,f_auto"
-        ),
-        fullUrl: generateCloudinaryUrl(
-          p.id,
-          "w_800,h_800,c_limit,q_auto,f_auto"
-        ),
-        createdAt: new Date().toISOString(),
-      }));
-
-      uploadedPhotos.forEach(onPhotoUploaded);
-      handleUploadSuccess(uploadedPhotos);
-      setPreviewImages([]);
-    } catch (error) {
-      console.error("💥 업로드 오류:", error);
-      alert(`업로드 실패:\n${error.message}`);
-    } finally {
-      setUploading(false);
+      return;
     }
-  };
-*/
-  // PhotoUpload.jsx
 
-  // ✅ 새로운 업로드 함수 (파일을 하나씩 순차적으로 전송)
-  const handleUpload = async () => {
-    if (previewImages.length === 0) return;
     setUploading(true);
 
-    const allUploadedPhotos = [];
     const failedUploads = [];
 
     try {
-      // Promise.all을 사용해 모든 파일 업로드를 동시에 시도
       const uploadPromises = previewImages.map(async (item) => {
         try {
           const formData = new FormData();
@@ -137,24 +118,21 @@ function PhotoUpload({
             throw new Error(result.error || `'${item.name}' 업로드 실패`);
           }
 
-          console.log(`✅ '${item.name}' 업로드 성공:`, result.photos[0]);
-          return result.photos[0]; // 백엔드는 파일 1개만 처리하므로 첫 번째 결과 사용
+          return result.photos[0];
         } catch (uploadError) {
           console.error(`💥 '${item.name}' 업로드 중 오류:`, uploadError);
           failedUploads.push({ name: item.name, reason: uploadError.message });
-          return null; // 실패한 경우 null 반환
+          return null;
         }
       });
 
-      // 모든 업로드 작업이 끝날 때까지 기다림
       const results = await Promise.all(uploadPromises);
-      const successfulUploads = results.filter((p) => p !== null); // 성공한 것만 필터링
+      const successfulUploads = results.filter((p) => p !== null);
 
       if (successfulUploads.length === 0) {
         throw new Error("모든 파일 업로드에 실패했습니다.");
       }
 
-      // 성공한 사진들을 전체 사진 객체로 변환
       const finalPhotos = successfulUploads.map((p) => ({
         id: p.id,
         url: p.url,
@@ -171,13 +149,9 @@ function PhotoUpload({
         createdAt: new Date().toISOString(),
       }));
 
-      // 성공한 각 사진에 대해 상위 컴포넌트 상태 업데이트
       finalPhotos.forEach(onPhotoUploaded);
-
-      // 업로드 성공 처리 (자동 이동 포함)
       handleUploadSuccess(finalPhotos);
 
-      // 실패한 파일이 있다면 사용자에게 알림
       if (failedUploads.length > 0) {
         const failedFileNames = failedUploads.map((f) => f.name).join(", ");
         alert(`${failedUploads.length}개 파일 업로드 실패: ${failedFileNames}`);
@@ -191,7 +165,7 @@ function PhotoUpload({
       setUploading(false);
     }
   };
-  // 삭제할 사진 선택/해제
+
   const togglePhotoForDeletion = (photoId) => {
     setPhotosToDelete((prev) => {
       const newSet = new Set(prev);
@@ -201,7 +175,6 @@ function PhotoUpload({
     });
   };
 
-  // 삭제 실행 (비밀번호 확인 후)
   const handleDeleteRequest = () => {
     if (photosToDelete.size === 0) return;
     setShowPasswordPrompt(true);
@@ -223,7 +196,6 @@ function PhotoUpload({
       previewImages.forEach((item) => URL.revokeObjectURL(item.preview));
   }, [previewImages]);
 
-  // 업로드 성공 화면
   if (uploadSuccess) {
     return (
       <div
@@ -251,8 +223,73 @@ function PhotoUpload({
         <h1>📷 {monthName} 사진 관리</h1>
       </div>
 
-      <div className="card" style={{ marginBottom: "30px" }}>
-        <h3>새로운 사진 추가하기</h3>
+      {/* ✅ 사진 제한 안내 카드 */}
+      <div
+        className="card"
+        style={{
+          marginBottom: "20px",
+          backgroundColor: needsDelete ? "#ffebee" : "#e8f5e8",
+          border: needsDelete ? "2px solid #ff5252" : "2px solid #4caf50",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "24px" }}>{needsDelete ? "⚠️" : "📊"}</span>
+          <div>
+            <h4
+              style={{
+                margin: "0",
+                color: needsDelete ? "#d32f2f" : "#2e7d32",
+              }}
+            >
+              {monthName} 사진 현황: {existingPhotos.length}/
+              {MAX_PHOTOS_PER_MONTH}장
+            </h4>
+            <p style={{ margin: "5px 0 0 0", fontSize: "14px" }}>
+              {needsDelete
+                ? `❌ 사진이 가득 찼습니다! 새로 업로드하려면 먼저 ${
+                    photosToDelete.size > 0 ? photosToDelete.size : 1
+                  }장 이상 삭제해주세요.`
+                : `✅ ${remainingSlots}장 더 업로드할 수 있습니다.`}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="card"
+        style={{
+          marginBottom: "30px",
+          opacity: needsDelete ? 0.6 : 1,
+          pointerEvents: needsDelete ? "none" : "auto",
+        }}
+      >
+        <h3>
+          새로운 사진 추가하기
+          {needsDelete && <span style={{ color: "#d32f2f" }}> (제한됨)</span>}
+        </h3>
+
+        {needsDelete && (
+          <div
+            style={{
+              backgroundColor: "#ffebee",
+              padding: "15px",
+              borderRadius: "8px",
+              marginBottom: "15px",
+              border: "1px solid #ffcdd2",
+            }}
+          >
+            <h4 style={{ margin: "0 0 10px 0", color: "#d32f2f" }}>
+              🚫 업로드 제한
+            </h4>
+            <p style={{ margin: "0", fontSize: "14px" }}>
+              {monthName}에는 최대 <strong>{MAX_PHOTOS_PER_MONTH}장</strong>
+              까지만 저장할 수 있습니다.
+              <br />새 사진을 추가하려면{" "}
+              <strong>아래에서 기존 사진을 먼저 삭제</strong>해주세요.
+            </p>
+          </div>
+        )}
+
         <div className="file-selector">
           <input
             ref={fileInputRef}
@@ -262,9 +299,18 @@ function PhotoUpload({
             onChange={handleFileSelect}
             style={{ display: "none" }}
             id="photo-input"
+            disabled={needsDelete}
           />
-          <label htmlFor="photo-input" className="file-input-label">
-            📁 컴퓨터에서 사진 선택
+          <label
+            htmlFor="photo-input"
+            className={`file-input-label ${needsDelete ? "disabled" : ""}`}
+            style={{
+              backgroundColor: needsDelete ? "#ccc" : "",
+              cursor: needsDelete ? "not-allowed" : "pointer",
+            }}
+          >
+            📁 컴퓨터에서 사진 선택{" "}
+            {remainingSlots > 0 && `(최대 ${remainingSlots}장)`}
           </label>
         </div>
 
@@ -291,7 +337,7 @@ function PhotoUpload({
             <button
               className="upload-btn-main"
               onClick={handleUpload}
-              disabled={uploading}
+              disabled={uploading || needsDelete}
             >
               {uploading
                 ? "업로드 중..."
@@ -301,12 +347,23 @@ function PhotoUpload({
         )}
       </div>
 
-      {/* --- 기존 사진 관리 섹션 --- */}
       <div className="card">
-        <h3>기존 사진 관리 ({existingPhotos.length}장)</h3>
+        <h3>
+          기존 사진 관리 ({existingPhotos.length}장)
+          {needsDelete && (
+            <span style={{ color: "#d32f2f" }}> - 삭제 필요!</span>
+          )}
+        </h3>
+
         {existingPhotos.length > 0 ? (
           <>
-            <p>삭제할 사진을 선택하세요.</p>
+            <p>
+              {needsDelete
+                ? `⚠️ 새 사진을 업로드하려면 먼저 ${
+                    MAX_PHOTOS_PER_MONTH - remainingSlots
+                  }장 이상 삭제하세요.`
+                : "삭제할 사진을 선택하세요."}
+            </p>
             <div className="preview-grid deletion-mode">
               {existingPhotos.map((photo) => (
                 <div
@@ -326,8 +383,13 @@ function PhotoUpload({
                 className="fortune-btn delete-btn"
                 onClick={handleDeleteRequest}
                 disabled={photosToDelete.size === 0}
+                style={{
+                  backgroundColor:
+                    needsDelete && photosToDelete.size > 0 ? "#ff5252" : "",
+                }}
               >
                 선택한 사진 삭제 ({photosToDelete.size}장)
+                {needsDelete && photosToDelete.size > 0 && " 🔥"}
               </button>
             </div>
           </>
@@ -336,7 +398,6 @@ function PhotoUpload({
         )}
       </div>
 
-      {/* 비밀번호 입력 모달 */}
       {showPasswordPrompt && (
         <div className="modal-overlay">
           <div className="modal-content">

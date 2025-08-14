@@ -5,7 +5,7 @@ export const getAllPhotos = async () => {
   try {
     console.log("🔍 getAllPhotos 함수 호출됨");
 
-    const response = await fetch("/api/all", {
+    const response = await fetch("http://localhost:3000/api/all", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

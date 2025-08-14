@@ -227,9 +227,8 @@ const MonthlyPhotos = ({
         <div className="monthly-title">
           <span className="month-emoji-large">📅</span>
           <h1>월별 사진 갤러리</h1>
-          <span className="month-emoji-large">📸</span>
         </div>
-        <button
+        {/*<button
           className="fortune-btn"
           onClick={onRefresh}
           style={{ backgroundColor: "#4CAF50" }}
@@ -237,9 +236,10 @@ const MonthlyPhotos = ({
         >
           🔄
         </button>
+         */}
       </div>
 
-      {/* 전체 통계 표시 */}
+      {/* 전체 통계 표시
       <div
         className="card"
         style={{
@@ -278,7 +278,7 @@ const MonthlyPhotos = ({
           </div>
         </div>
       </div>
-
+ */}
       <div className="monthly-content">
         <div className="compact-months-grid">
           {months.map((monthInfo) => {
@@ -339,23 +339,21 @@ const MonthlyPhotos = ({
                 </span>
                 <h3>
                   {months.find((m) => m.month === selectedMonth)?.name} 다인이
-                  사진
+                  사진 : {getPhotosForMonth(selectedMonth).length}장
                 </h3>
-                <span className="selected-photo-count">
-                  이 {getPhotosForMonth(selectedMonth).length}장
-                </span>
-              </div>
-              <button
-                className="upload-btn-compact"
-                onClick={() => {
-                  setUploadMonth(selectedMonth);
-                  setShowUpload(true);
-                }}
-              >
-                📷 사진 추가
-              </button>
-            </div>
+                {/**   <span className="selected-photo-count"> {getPhotosForMonth(selectedMonth).length}장</span>*/}
 
+                <button
+                  className="upload-btn-compact"
+                  onClick={() => {
+                    setUploadMonth(selectedMonth);
+                    setShowUpload(true);
+                  }}
+                >
+                  사진추가
+                </button>
+              </div>
+            </div>
             {getPhotosForMonth(selectedMonth).length > 0 ? (
               <div className="selected-month-grid">
                 {getPhotosForMonth(selectedMonth).map((photo) => {
@@ -467,7 +465,6 @@ const MonthlyPhotos = ({
         )}
       </div>
 
-      {/* 모달 */}
       {selectedImage && (
         <div
           className="modal-overlay"
@@ -523,17 +520,21 @@ const MonthlyPhotos = ({
                 borderRadius: "50%",
                 width: "30px",
                 height: "30px",
-                fontSize: "18px",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                fontSize: "22px",
+                color: "#333",
+                fontWeight: "bold",
+                fontFamily: "sans-serif",
+                lineHeight: 1,
+                padding: "0 0 2px 0",
               }}
             >
               ×
             </button>
 
-            {/* 사진 상세 정보 */}
             <div
               style={{
                 position: "absolute",
@@ -544,7 +545,7 @@ const MonthlyPhotos = ({
                 padding: "10px 20px",
                 borderRadius: "20px",
                 textAlign: "center",
-                minWidth: "200px",
+                minWidth: "300px",
               }}
             >
               <div
@@ -554,8 +555,10 @@ const MonthlyPhotos = ({
                   marginBottom: "5px",
                 }}
               >
-                {selectedImage.month}월 • {selectedImage.name || "다인이 사진"}
+                {selectedImage.month}월{" "}
+                {/* •{" "}  {"다인이 사진" || "다인이 사진"} */}
               </div>
+              {/**  
               <div style={{ fontSize: "12px", color: "#666" }}>
                 📁 Cloudinary Storage
                 {selectedImage.createdAt && (
@@ -568,6 +571,7 @@ const MonthlyPhotos = ({
                   </span>
                 )}
               </div>
+            */}
             </div>
           </div>
         </div>

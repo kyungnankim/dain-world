@@ -23,7 +23,6 @@ function PhotoGallery({ photos = [] }) {
     setSelectedImage(null);
   }, []);
 
-  // 키보드 이벤트 처리
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Escape") {
@@ -40,7 +39,6 @@ function PhotoGallery({ photos = [] }) {
     }
   }, [selectedImage, handleKeyDown]);
 
-  // 이미지 로드 에러 처리
   const handleImageError = useCallback((photoId, imageUrl) => {
     console.error("이미지 로드 실패:", imageUrl);
     setImageErrors((prev) => new Set([...prev, photoId]));
@@ -71,17 +69,9 @@ function PhotoGallery({ photos = [] }) {
     <>
       <div className="card">
         <h2>📸 다인이의 성장 앨범</h2>
-        <div
-          style={{
-            marginBottom: "10px",
-            textAlign: "center",
-            fontSize: "14px",
-            color: "#666",
-          }}
-        >
-          총 <strong>{photos.length}</strong>장의 사진
-        </div>
-
+        <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
+          사진을 터치하면 크게 볼 수 있어요!
+        </p>
         <Swiper
           modules={[Navigation]}
           spaceBetween={10}
@@ -187,13 +177,7 @@ function PhotoGallery({ photos = [] }) {
             );
           })}
         </Swiper>
-
-        <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
-          📱 사진을 터치하면 크게 볼 수 있어요!
-        </p>
       </div>
-
-      {/* 모달 */}
       {selectedImage && (
         <div
           className="modal-overlay"
@@ -227,7 +211,7 @@ function PhotoGallery({ photos = [] }) {
               alt={selectedImage.alt || selectedImage.name}
               onError={(e) => {
                 console.error("모달 이미지 로드 실패:", selectedImage);
-                e.target.src = selectedImage.url; // fallback to original URL
+                e.target.src = selectedImage.url;
               }}
               style={{
                 width: "100%",
@@ -249,17 +233,21 @@ function PhotoGallery({ photos = [] }) {
                 borderRadius: "50%",
                 width: "30px",
                 height: "30px",
-                fontSize: "18px",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                fontSize: "22px",
+                color: "#333",
+                fontWeight: "bold",
+                fontFamily: "sans-serif",
+                lineHeight: 1,
+                padding: "0 0 2px 0",
               }}
             >
               ×
             </button>
 
-            {/* 사진 정보 표시 */}
             <div
               style={{
                 position: "absolute",
@@ -273,7 +261,7 @@ function PhotoGallery({ photos = [] }) {
                 whiteSpace: "nowrap",
               }}
             >
-              {selectedImage.month}월 • {selectedImage.name || "다인이 사진"}
+              {selectedImage.month}월 • {"다인이 사진"}
             </div>
           </div>
         </div>

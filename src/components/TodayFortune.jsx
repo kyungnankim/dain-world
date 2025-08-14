@@ -167,18 +167,15 @@ const TodayFortune = ({ photos = [] }) => {
   }, [photos]);
 
   const showFortune = () => {
-    // 랜덤 운세 선택
     const randomFortuneIndex = Math.floor(Math.random() * fortunes.length);
     const selectedFortune = fortunes[randomFortuneIndex];
     setFortune(selectedFortune);
 
-    // 사진이 있으면 랜덤 사진 선택
     if (photos && photos.length > 0) {
       const randomPhoto = photos[Math.floor(Math.random() * photos.length)];
       console.log("선택된 운세 사진:", randomPhoto);
 
       setSelectedPhoto(randomPhoto);
-      // fortuneUrl이 있으면 사용, 없으면 thumbnailUrl, 그것도 없으면 url 사용
       const imageUrl =
         randomPhoto.fortuneUrl || randomPhoto.thumbnailUrl || randomPhoto.url;
       setFortuneImageUrl(imageUrl);
@@ -197,7 +194,6 @@ const TodayFortune = ({ photos = [] }) => {
     console.error("운세 이미지 로드 실패:", fortuneImageUrl);
     setImageError(true);
 
-    // fallback 순서: selectedPhoto의 다른 URL들 시도
     if (selectedPhoto) {
       if (e.target.src !== selectedPhoto.url) {
         e.target.src = selectedPhoto.url;
@@ -212,7 +208,6 @@ const TodayFortune = ({ photos = [] }) => {
       }
     }
 
-    // 최종 fallback
     e.target.src =
       "https://ik.imagekit.io/duixwrddg/default-dain-world/default.png";
   };
@@ -225,20 +220,6 @@ const TodayFortune = ({ photos = [] }) => {
   return (
     <div className="card fortune-card">
       <h2>✨ 다인이의 오늘의 운세 ✨</h2>
-
-      {/* 사진 개수 표시 */}
-      {photos.length > 0 && (
-        <div
-          style={{
-            textAlign: "center",
-            fontSize: "12px",
-            color: "#666",
-            marginBottom: "10px",
-          }}
-        >
-          {photos.length}장의 사진 중에서 랜덤 선택
-        </div>
-      )}
 
       <div style={{ position: "relative", display: "inline-block" }}>
         {imageError ? (
@@ -262,7 +243,7 @@ const TodayFortune = ({ photos = [] }) => {
           </div>
         ) : (
           <img
-            key={fortuneImageUrl} // key를 추가하여 이미지 변경시 리렌더링 보장
+            key={fortuneImageUrl}
             src={fortuneImageUrl}
             alt="다인이 운세 사진"
             className="fortune-img"
@@ -317,10 +298,9 @@ const TodayFortune = ({ photos = [] }) => {
       </div>
 
       <button onClick={showFortune} className="fortune-btn">
-        {photos.length > 0 ? "운세 보기 🔮" : "운세 보기 (사진 없음)"}
+        {photos.length > 0 ? "🔮 운세 보기" : "운세 보기 (사진 없음)"}
       </button>
 
-      {/* 사진이 없을 때 안내 메시지 */}
       {photos.length === 0 && (
         <div
           style={{

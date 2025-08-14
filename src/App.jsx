@@ -198,6 +198,7 @@ function App() {
         <>
           {renderCurrentView()}
           <FloatingButtons
+            activeView={currentView}
             onGoToMain={showMain}
             onVideoClick={showVideo}
             onMonthlyPhotosClick={showMonthlyPhotos}
