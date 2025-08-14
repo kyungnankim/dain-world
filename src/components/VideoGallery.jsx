@@ -1,12 +1,64 @@
-// src/components/VideoGallery.jsx - YouTube Player API 사용 버전
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import video48 from "../assets/IMG_2025081321224470.MOV";
+import video49 from "../assets/IMG_2025081321224483.MOV";
+
+// 안정성을 개선한 YouTube 플레이어 컴포넌트
+const YouTubePlayer = ({ videoId, onReady, onError }) => {
+  const playerInstanceRef = useRef(null);
+  const [playerId] = useState(
+    `Youtubeer-${Math.random().toString(36).substr(2, 9)}`
+  );
+
+  useEffect(() => {
+    if (!window.YT || !window.YT.Player) return;
+
+    const cleanup = () => {
+      if (
+        playerInstanceRef.current &&
+        typeof playerInstanceRef.current.destroy === "function"
+      ) {
+        playerInstanceRef.current.destroy();
+        playerInstanceRef.current = null;
+      }
+    };
+
+    cleanup();
+
+    playerInstanceRef.current = new window.YT.Player(playerId, {
+      videoId: videoId,
+      width: "100%",
+      height: "100%",
+      playerVars: {
+        autoplay: 1,
+        controls: 1,
+        rel: 0,
+        modestbranding: 1,
+        fs: 1,
+        cc_load_policy: 0,
+        iv_load_policy: 3,
+      },
+      events: { onReady, onError },
+    });
+
+    return cleanup;
+  }, [videoId, playerId, onReady, onError]);
+
+  return (
+    <div style={{ width: "100%", height: "100%" }}>
+      <div id={playerId} />
+    </div>
+  );
+};
 
 const VideoGallery = ({ onBack }) => {
-  const playersRef = useRef({});
+  const [playingVideoId, setPlayingVideoId] = useState(null);
+  // *** 로컬 비디오 썸네일을 저장할 상태 추가 ***
+  const [localThumbnails, setLocalThumbnails] = useState({});
 
-  const youtubeVideos = [
+  const allVideos = [
     {
       id: 1,
+      type: "youtube",
       title: "[광고]엘라스틴 광고패러디",
       videoId: "9wkbeXGS5v4",
       date: "2024-10-15",
@@ -15,6 +67,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 2,
+      type: "youtube",
       title: "[다큐]여권사진편",
       videoId: "QUZy_3dCGdk",
       date: "2024-11-20",
@@ -23,6 +76,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 3,
+      type: "youtube",
       title: "다인이 뒤집기 🤸‍♀️",
       videoId: "5q6fhAFXjH0",
       date: "2024-12-01",
@@ -30,6 +84,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 4,
+      type: "youtube",
       title: "[효과]세상을 보며 환하게 웃는 다인이",
       videoId: "1OVWaPMc-sY",
       date: "2025-01-10",
@@ -37,14 +92,15 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 5,
+      type: "youtube",
       title: "[다큐]다인이 첫 설 날",
       videoId: "bBXaXeWPiFM",
       date: "2025-02-05",
       description: "예쁜 한복을 입고 처음으로 설날을 맞이했어요.",
     },
-    // 새로 추가된 영상들
     {
       id: 6,
+      type: "youtube",
       title: "다인이 일상 모먼트 1",
       videoId: "sVRBXrrKmW8",
       date: "2025-02-10",
@@ -52,6 +108,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 7,
+      type: "youtube",
       title: "다인이 성장기록 📹",
       videoId: "yG7ODccX2iU",
       date: "2025-02-12",
@@ -59,6 +116,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 8,
+      type: "youtube",
       title: "다인이 놀이시간 🎪",
       videoId: "taVLdYXRPcM",
       date: "2025-02-14",
@@ -66,6 +124,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 9,
+      type: "youtube",
       title: "다인이 쇼츠 #1",
       videoId: "NrWT7E08hEA",
       date: "2025-02-15",
@@ -73,6 +132,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 10,
+      type: "youtube",
       title: "다인이 쇼츠 #2 ✨",
       videoId: "Kf1QSq0RDA8",
       date: "2025-02-16",
@@ -80,6 +140,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 11,
+      type: "youtube",
       title: "다인이 웃음 모음집",
       videoId: "rGrJP_8sAEA",
       date: "2025-02-17",
@@ -87,6 +148,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 12,
+      type: "youtube",
       title: "다인이 표정 변화 😊",
       videoId: "_Obo1hu4FL8",
       date: "2025-02-18",
@@ -94,6 +156,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 13,
+      type: "youtube",
       title: "다인이 움직임 포착 📸",
       videoId: "QgcGt_cPyCY",
       date: "2025-02-19",
@@ -101,6 +164,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 14,
+      type: "youtube",
       title: "다인이 잠자는 모습 😴",
       videoId: "rFTmrmKn904",
       date: "2025-02-20",
@@ -108,6 +172,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 15,
+      type: "youtube",
       title: "다인이 밥먹는 시간 🍼",
       videoId: "b3yXlCxOjm0",
       date: "2025-02-21",
@@ -115,6 +180,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 16,
+      type: "youtube",
       title: "다인이 신기한 표정 😲",
       videoId: "AXoC6EYRz1A",
       date: "2025-02-22",
@@ -122,6 +188,7 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 17,
+      type: "youtube",
       title: "다인이 행복한 순간 💝",
       videoId: "gfsf0_RwCoM",
       date: "2025-02-23",
@@ -129,156 +196,499 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 18,
+      type: "youtube",
       title: "다인이 특별한 하루 🌟",
       videoId: "WupC2KQMAig",
       date: "2025-02-24",
       description: "평범하지만 특별한 다인이의 일상을 담은 마지막 영상입니다.",
     },
-  ];
+    {
+      id: 19,
+      type: "youtube",
+      title: "다인이 영상 1",
+      videoId: "5vjJjOyG_cE",
+      date: "2025-02-25",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 20,
+      type: "youtube",
+      title: "다인이 영상 2",
+      videoId: "69hGWCiv6eE",
+      date: "2025-02-26",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 21,
+      type: "youtube",
+      title: "다인이 영상 3",
+      videoId: "2YDRYvnT1uo",
+      date: "2025-02-27",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 22,
+      type: "youtube",
+      title: "다인이 영상 4",
+      videoId: "4gkEYy6P8Sw",
+      date: "2025-02-28",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 23,
+      type: "youtube",
+      title: "다인이 영상 5",
+      videoId: "Vi2WNamHDLo",
+      date: "2025-03-01",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 24,
+      type: "youtube",
+      title: "다인이 영상 6",
+      videoId: "jiJ63k2I7qE",
+      date: "2025-03-02",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 25,
+      type: "youtube",
+      title: "다인이 영상 7",
+      videoId: "xFfe3hnQ7sU",
+      date: "2025-03-03",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 26,
+      type: "youtube",
+      title: "다인이 영상 8",
+      videoId: "S1Db9Q7bfes",
+      date: "2025-03-04",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 27,
+      type: "youtube",
+      title: "다인이 영상 9",
+      videoId: "AJw8PxJnkwQ",
+      date: "2025-03-05",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 28,
+      type: "youtube",
+      title: "다인이 영상 10",
+      videoId: "gXYzSLXHNe8",
+      date: "2025-03-06",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 29,
+      type: "youtube",
+      title: "다인이 영상 11",
+      videoId: "LfA6R_adhm8",
+      date: "2025-03-07",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 30,
+      type: "youtube",
+      title: "다인이 영상 12",
+      videoId: "-JBXcubg-AM",
+      date: "2025-03-08",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 31,
+      type: "youtube",
+      title: "다인이 영상 13",
+      videoId: "9f-9jCf9hQM",
+      date: "2025-03-09",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 32,
+      type: "youtube",
+      title: "다인이 영상 14",
+      videoId: "4G8w3f0SLCo",
+      date: "2025-03-10",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 33,
+      type: "youtube",
+      title: "다인이 영상 15",
+      videoId: "s0pfgv7O-u4",
+      date: "2025-03-11",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 34,
+      type: "youtube",
+      title: "다인이 영상 16",
+      videoId: "Wg2nmwgHwwI",
+      date: "2025-03-12",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 35,
+      type: "youtube",
+      title: "다인이 영상 17",
+      videoId: "QMqCkgR0aCo",
+      date: "2025-03-13",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 36,
+      type: "youtube",
+      title: "다인이 영상 18",
+      videoId: "oYiJnNeVzKw",
+      date: "2025-03-14",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 37,
+      type: "youtube",
+      title: "다인이 영상 19",
+      videoId: "leGpOikQsiI",
+      date: "2025-03-15",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 38,
+      type: "youtube",
+      title: "다인이 영상 20",
+      videoId: "R4dTFf_3dh8",
+      date: "2025-03-16",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 39,
+      type: "youtube",
+      title: "다인이 영상 21",
+      videoId: "D-60jq2Z-y4",
+      date: "2025-03-17",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 40,
+      type: "youtube",
+      title: "다인이 영상 22",
+      videoId: "6BQlz8CuQ4E",
+      date: "2025-03-18",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 41,
+      type: "youtube",
+      title: "다인이 영상 23",
+      videoId: "hMy1jRvgvxQ",
+      date: "2025-03-19",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 42,
+      type: "youtube",
+      title: "다인이 영상 24",
+      videoId: "8WX1dmiIsgQ",
+      date: "2025-03-20",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 43,
+      type: "youtube",
+      title: "다인이 영상 25",
+      videoId: "uPeBzN9ubGQ",
+      date: "2025-03-21",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 44,
+      type: "youtube",
+      title: "다인이 영상 26",
+      videoId: "euboqobaCt4",
+      date: "2025-03-22",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 45,
+      type: "youtube",
+      title: "다인이 영상 27",
+      videoId: "VPuPqipsRcM",
+      date: "2025-03-23",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 46,
+      type: "youtube",
+      title: "다인이 영상 28",
+      videoId: "5UrgJdefTF8",
+      date: "2025-03-24",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+    {
+      id: 47,
+      type: "youtube",
+      title: "다인이 영상 29",
+      videoId: "RbPG5lWypF4",
+      date: "2025-03-25",
+      description: "다인이의 새로운 순간을 담은 영상입니다.",
+    },
+
+    // 로컬 비디오 목록
+    {
+      id: 48,
+      type: "local",
+      title: "다인이 영상 48",
+      localSrc: video48,
+      date: "2025-08-13",
+      description: "다인이의 순간을 담은 로컬 영상입니다.",
+    },
+    {
+      id: 49,
+      type: "local",
+      title: "다인이 영상 49",
+      localSrc: video49,
+      date: "2025-08-13",
+      description: "다인이의 순간을 담은 로컬 영상입니다.",
+    },
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   useEffect(() => {
-    // YouTube Player API 스크립트 로드
     const loadYouTubeAPI = () => {
-      if (window.YT && window.YT.Player) {
-        initializePlayers();
-        return;
+      if (!document.getElementById("youtube-api")) {
+        const script = document.createElement("script");
+        script.id = "youtube-api";
+        script.src = "https://www.youtube.com/iframe_api";
+        script.async = true;
+        document.head.appendChild(script);
+        window.onYouTubeIframeAPIReady = () =>
+          console.log("YouTube API loaded");
       }
-
-      if (document.getElementById("youtube-api")) {
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.id = "youtube-api";
-      script.src = "https://www.youtube.com/iframe_api";
-      script.async = true;
-      document.head.appendChild(script);
-
-      window.onYouTubeIframeAPIReady = initializePlayers;
     };
-
-    const initializePlayers = () => {
-      youtubeVideos.forEach((video) => {
-        if (playersRef.current[video.id]) return;
-
-        playersRef.current[video.id] = new window.YT.Player(
-          `player-${video.id}`,
-          {
-            videoId: video.videoId,
-            width: "100%",
-            height: "100%",
-            playerVars: {
-              autoplay: 0,
-              controls: 1,
-              rel: 0,
-              showinfo: 0,
-              modestbranding: 1,
-              fs: 1,
-              cc_load_policy: 0,
-              iv_load_policy: 3,
-              autohide: 0,
-              vq: "hd1080",
-              hd: 1,
-              quality: "hd1080",
-              suggestedQuality: "hd1080",
-            },
-            events: {
-              onReady: (event) => {
-                // 여러 방법으로 화질 설정 시도
-                setTimeout(() => {
-                  try {
-                    const player = event.target;
-                    const availableQualities =
-                      player.getAvailableQualityLevels();
-                    console.log("Available qualities:", availableQualities);
-
-                    // 1080p 시도
-                    if (availableQualities.includes("hd1080")) {
-                      player.setPlaybackQuality("hd1080");
-                      console.log("Set to 1080p");
-                    }
-                    // 720p 시도
-                    else if (availableQualities.includes("hd720")) {
-                      player.setPlaybackQuality("hd720");
-                      console.log("Set to 720p");
-                    }
-                    // large (480p) 시도
-                    else if (availableQualities.includes("large")) {
-                      player.setPlaybackQuality("large");
-                      console.log("Set to 480p");
-                    }
-                  } catch (error) {
-                    console.log("Quality setting failed:", error);
-                  }
-                }, 1000);
-              },
-              onStateChange: (event) => {
-                // 재생 시작, 일시정지 해제 시 화질 재설정
-                if (
-                  event.data === window.YT.PlayerState.PLAYING ||
-                  event.data === window.YT.PlayerState.BUFFERING
-                ) {
-                  setTimeout(() => {
-                    try {
-                      const player = event.target;
-                      const availableQualities =
-                        player.getAvailableQualityLevels();
-                      if (availableQualities.includes("hd1080")) {
-                        player.setPlaybackQuality("hd1080");
-                      }
-                    } catch (error) {
-                      console.log("Quality re-setting failed:", error);
-                    }
-                  }, 500);
-                }
-              },
-            },
-          }
-        );
-      });
-    };
-
     loadYouTubeAPI();
 
-    // 컴포넌트 언마운트 시 플레이어 정리
-    return () => {
-      Object.values(playersRef.current).forEach((player) => {
-        if (player && player.destroy) {
-          player.destroy();
-        }
+    // *** 로컬 비디오 썸네일 생성 로직 ***
+    const createThumbnail = (video, id) => {
+      return new Promise((resolve) => {
+        const videoElement = document.createElement("video");
+        videoElement.src = video;
+        videoElement.crossOrigin = "anonymous";
+        videoElement.onloadeddata = () => {
+          videoElement.currentTime = 1; // 1초 시점의 프레임 캡처
+        };
+        videoElement.onseeked = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = videoElement.videoWidth;
+          canvas.height = videoElement.videoHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          resolve({ id, thumb: canvas.toDataURL("image/jpeg") });
+        };
       });
-      playersRef.current = {};
     };
+
+    allVideos
+      .filter((v) => v.type === "local")
+      .forEach((v) => {
+        createThumbnail(v.localSrc, v.id).then(({ id, thumb }) => {
+          setLocalThumbnails((prev) => ({ ...prev, [id]: thumb }));
+        });
+      });
   }, []);
 
+  const handlePlay = (id) => {
+    setPlayingVideoId(playingVideoId === id ? null : id);
+  };
+
   return (
-    <div className="video-gallery-container">
-      <div className="video-header">
-        <button className="fortune-btn" onClick={onBack}>
+    <div
+      className="video-gallery-container"
+      style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}
+    >
+      <div
+        className="video-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "30px",
+          padding: "20px",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "12px",
+        }}
+      >
+        <button
+          className="fortune-btn"
+          onClick={onBack}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
           ← 돌아가기
         </button>
-        <h1 className="video-title">🎬 다인이 동영상 갤러리</h1>
-        {/* 헤더 균형을 위한 빈 div */}
-        <div style={{ width: "86px" }}></div>
+        <h1
+          className="video-title"
+          style={{
+            margin: 0,
+            fontSize: "24px",
+            fontWeight: "bold",
+            color: "#333",
+          }}
+        >
+          🎬 다인이 동영상 갤러리
+        </h1>
+        <div style={{ width: "86px" }} />
       </div>
 
-      <div className="video-content">
-        {youtubeVideos.map((video) => (
-          <div key={video.id} className="video-card">
-            <div className="video-info-header">
-              <h3 className="video-card-title">{video.title}</h3>
-              <p className="video-date">{video.date}</p>
+      <div
+        className="video-content"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+          gap: "20px",
+        }}
+      >
+        {allVideos.map((video) => (
+          <div
+            key={video.id}
+            className="video-card"
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "20px",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+              border: "1px solid #e1e5e9",
+            }}
+          >
+            <div className="video-info-header" style={{ marginBottom: "15px" }}>
+              <h3
+                style={{
+                  margin: "0 0 8px 0",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: "#333",
+                }}
+              >
+                {video.title}
+              </h3>
+              <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+                {video.date}
+              </p>
             </div>
 
-            <div className="responsive-video-wrapper">
+            <div
+              className="responsive-video-wrapper"
+              style={{
+                marginBottom: "15px",
+                position: "relative",
+                width: "100%",
+                paddingTop: "56.25%",
+                backgroundColor: "#000",
+                borderRadius: "8px",
+                overflow: "hidden",
+              }}
+            >
               <div
-                id={`player-${video.id}`}
-                style={{ width: "100%", height: "100%" }}
-              ></div>
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
+                {playingVideoId === video.id ? (
+                  video.type === "youtube" ? (
+                    <YouTubePlayer
+                      videoId={video.videoId}
+                      onReady={(e) => e.target.playVideo()}
+                      onError={() => setPlayingVideoId(null)}
+                    />
+                  ) : (
+                    <video
+                      controls
+                      autoPlay
+                      style={{ width: "100%", height: "100%" }}
+                      preload="auto"
+                      playsInline
+                    >
+                      <source src={video.localSrc} type="video/mp4" />
+                      <source src={video.localSrc} type="video/mov" />
+                      비디오를 재생할 수 없습니다.
+                    </video>
+                  )
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      cursor: "pointer",
+                      // *** 로컬 썸네일과 유튜브 썸네일을 조건부로 표시 ***
+                      backgroundImage:
+                        video.type === "youtube"
+                          ? `url(https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg)`
+                          : localThumbnails[video.id]
+                          ? `url(${localThumbnails[video.id]})`
+                          : "",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "white",
+                      fontSize: "14px",
+                    }}
+                    onClick={() => handlePlay(video.id)}
+                  >
+                    {video.type === "local" &&
+                      !localThumbnails[video.id] &&
+                      "썸네일 생성 중..."}
+                    <div
+                      style={{
+                        fontSize: "48px",
+                        backgroundColor: "rgba(0,0,0,0.7)",
+                        borderRadius: "50%",
+                        padding: "20px",
+                        color: "white",
+                        transition: "transform 0.2s",
+                        // 로컬 썸네일 생성 중에는 재생 버튼 숨김
+                        display:
+                          video.type === "local" && !localThumbnails[video.id]
+                            ? "none"
+                            : "block",
+                      }}
+                      onMouseOver={(e) =>
+                        (e.currentTarget.style.transform = "scale(1.1)")
+                      }
+                      onMouseOut={(e) =>
+                        (e.currentTarget.style.transform = "scale(1)")
+                      }
+                    >
+                      ▶️
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="video-info-footer">
-              <p className="video-description">{video.description}</p>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#555",
+                  fontSize: "14px",
+                  lineHeight: "1.5",
+                }}
+              >
+                {video.description}
+              </p>
             </div>
           </div>
         ))}

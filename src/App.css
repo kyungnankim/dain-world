@@ -1511,3 +1511,15 @@ h2 {
     padding: 6px 12px;
   }
 }
+/* YouTube iframe 경고 억제를 위한 CSS */
+.responsive-video-wrapper iframe {
+  /* 기본 고대비 모드 지원 */
+  forced-color-adjust: auto;
+}
+
+/* 콘솔 로그 필터링용 - 개발 환경에서만 사용 */
+@media (prefers-contrast: high) {
+  .responsive-video-wrapper {
+    filter: contrast(1.2);
+  }
+}
