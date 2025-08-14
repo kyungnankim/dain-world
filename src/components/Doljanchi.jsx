@@ -49,20 +49,27 @@ const Doljanchi = ({ partyDate }) => {
     window.open(`https://maps.google.com/maps?q=${query}`, "_blank");
   };
 
-  // 카카오네비로 목적지 설정 (다시 추가)
+  // ✅ 카카오네비 수정 - "메이필드 호텔 낙원"이 제대로 찍히도록
   const openKakaoNavi = () => {
-    const naviUrl = `kakaomap://route?ep=${hotelInfo.lng},${hotelInfo.lat}&by=CAR`;
-
     const isMobile =
       /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
       );
 
     if (isMobile) {
-      // 모바일: 카카오네비 앱 실행 시도
-      window.location.href = naviUrl;
+      // 방법 1: 최신 카카오네비 스키마 (목적지 이름 포함)
+      const kakaoNaviUrl = `kakaonavi://navigate?destination=${hotelInfo.lat},${
+        hotelInfo.lng
+      }&destination_name=${encodeURIComponent(hotelInfo.name)}`;
+      window.location.href = kakaoNaviUrl;
 
-      // 앱이 없으면 3초 후 카카오맵 웹으로 이동
+      // 방법 2: 1.5초 후 카카오맵 길찾기 스키마 시도
+      setTimeout(() => {
+        const kakaoRouteUrl = `kakaomap://route?sp=&ep=${hotelInfo.lat},${hotelInfo.lng}&by=CAR`;
+        window.location.href = kakaoRouteUrl;
+      }, 1500);
+
+      // 방법 3: 3초 후 웹으로 대체 (목적지 이름 포함)
       setTimeout(() => {
         window.open(
           `https://map.kakao.com/link/to/${encodeURIComponent(
@@ -72,7 +79,7 @@ const Doljanchi = ({ partyDate }) => {
         );
       }, 3000);
     } else {
-      // PC: 카카오맵 웹에서 길찾기
+      // PC: 카카오맵 웹에서 길찾기 (목적지 이름 포함)
       window.open(
         `https://map.kakao.com/link/to/${encodeURIComponent(hotelInfo.name)},${
           hotelInfo.lat
@@ -123,27 +130,42 @@ const Doljanchi = ({ partyDate }) => {
     }
   };
 
-  // 티맵으로 목적지 설정 (추가 옵션)
+  // ✅ 티맵 수정 - 앱이 제대로 실행되도록
   const openTmap = () => {
-    const tmapUrl = `tmap://route?goalname=${encodeURIComponent(
-      hotelInfo.name
-    )}&goalx=${hotelInfo.lng}&goaly=${hotelInfo.lat}`;
-
     const isMobile =
       /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
       );
 
     if (isMobile) {
-      // 모바일: 티맵 앱 실행 시도
-      window.location.href = tmapUrl;
+      // 방법 1: 최신 티맵 스키마 (길찾기)
+      const tmapNaviUrl = `tmap://route?goalname=${encodeURIComponent(
+        hotelInfo.name
+      )}&goalx=${hotelInfo.lng}&goaly=${hotelInfo.lat}`;
+      window.location.href = tmapNaviUrl;
 
-      // 앱이 없으면 구글맵으로 대체
+      // 방법 2: 1.5초 후 대안 티맵 스키마 시도
+      setTimeout(() => {
+        const tmapSearchUrl = `tmap://search?name=${encodeURIComponent(
+          hotelInfo.address
+        )}`;
+        window.location.href = tmapSearchUrl;
+      }, 1500);
+
+      // 방법 3: 3초 후 티맵 웹 시도
+      setTimeout(() => {
+        const tmapWebUrl = `https://apis.openapi.sk.com/tmap/app/routes?startX=&startY=&endX=${
+          hotelInfo.lng
+        }&endY=${hotelInfo.lat}&endName=${encodeURIComponent(hotelInfo.name)}`;
+        window.location.href = tmapWebUrl;
+      }, 3000);
+
+      // 방법 4: 4.5초 후 구글맵으로 최종 대체
       setTimeout(() => {
         openGoogleNavi();
-      }, 3000);
+      }, 4500);
     } else {
-      // PC에서는 구글맵으로 대체
+      // PC: 구글맵으로 대체
       openGoogleNavi();
     }
   };
@@ -494,17 +516,20 @@ const Doljanchi = ({ partyDate }) => {
         }}
       >
         <p>
-          궁금한 사항이 있으시면 언제든 연락주세요 📞
-          <br />
-          <span style={{ fontSize: "10px" }}>
+          <span style={{ fontSize: "20px" }}>
             헬퍼 연락처: <a href="tel:010-7503-6190">010-7503-6190</a>
           </span>
-          <span style={{ fontSize: "10px" }}>
+          <br />
+          <span style={{ fontSize: "20px" }}>
             최영민 연락처: <a href="tel:010-9937-2374">010-9937-2374</a>
-          </span>
-          <span style={{ fontSize: "10px" }}>
+          </span>{" "}
+          <br />
+          <span style={{ fontSize: "20px" }}>
             김민경 연락처: <a href="tel:010-5751-7457">010-5751-7457</a>
           </span>
+          <br />
+          궁금한 사항이 있으시면 언제든 연락주세요 📞
+          <br />
         </p>
       </div>
     </div>
