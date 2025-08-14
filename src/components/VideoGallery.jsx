@@ -7,31 +7,58 @@ const createThumbnail = (videoSrc) => {
   return new Promise((resolve, reject) => {
     const videoElement = document.createElement("video");
 
-    // 모바일 브라우저 정책 대응을 위한 속성 추가
     videoElement.playsInline = true;
     videoElement.muted = true;
-    videoElement.preload = "metadata";
-
-    videoElement.src = videoSrc;
+    videoElement.preload = "auto"; // 'metadata'보다 더 확실하게 preload
     videoElement.crossOrigin = "anonymous";
+    videoElement.src = videoSrc;
 
-    videoElement.onloadeddata = () => {
-      videoElement.currentTime = 0.1;
+    let seeked = false;
+
+    const cleanUp = () => {
+      videoElement.remove();
+    };
+
+    videoElement.onloadedmetadata = () => {
+      try {
+        if (videoElement.duration < 0.2) {
+          videoElement.currentTime = 0;
+        } else {
+          videoElement.currentTime = 0.1;
+        }
+      } catch (e) {
+        reject("Failed to set currentTime");
+        cleanUp();
+      }
     };
 
     videoElement.onseeked = () => {
+      if (seeked) return;
+      seeked = true;
       const canvas = document.createElement("canvas");
-      canvas.width = videoElement.videoWidth;
-      canvas.height = videoElement.videoHeight;
+      canvas.width = videoElement.videoWidth || 640;
+      canvas.height = videoElement.videoHeight || 360;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg"));
+      const dataURL = canvas.toDataURL("image/jpeg");
+      resolve(dataURL);
+      cleanUp();
     };
 
-    videoElement.onerror = (err) => reject(err);
+    videoElement.onerror = (err) => {
+      reject("Video load error");
+      cleanUp();
+    };
 
-    // 일부 브라우저에서는 명시적으로 load()를 호출해야 할 수 있습니다.
-    videoElement.load();
+    // Safari 등 일부 브라우저에서 onseeked가 안 올 경우 타임아웃 설정 (최대 5초)
+    setTimeout(() => {
+      if (!seeked) {
+        reject("Thumbnail generation timeout");
+        cleanUp();
+      }
+    }, 5000);
+
+    videoElement.load(); // 일부 브라우저에서 필요
   });
 };
 
@@ -84,7 +111,6 @@ const VideoGallery = ({ onBack }) => {
   const observer = useRef(null);
 
   const allVideos = [
-    // ... (기존 비디오 데이터는 양이 많아 생략)
     {
       id: 1,
       type: "youtube",
