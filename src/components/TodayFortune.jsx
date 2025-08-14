@@ -244,8 +244,8 @@ const TodayFortune = ({ photos = [] }) => {
         {imageError ? (
           <div
             style={{
-              width: "200px",
-              height: "200px",
+              width: "400px",
+              height: "400px",
               backgroundColor: "#f5f5f5",
               display: "flex",
               alignItems: "center",
@@ -270,7 +270,7 @@ const TodayFortune = ({ photos = [] }) => {
             onLoad={handleImageLoad}
             style={{
               maxWidth: "400px",
-              maxHeight: "200px",
+              maxHeight: "400px",
               objectFit: "cover",
               borderRadius: "10px",
               border: "3px solid #ff69b4",
