@@ -505,7 +505,7 @@ const VideoGallery = ({ onBack }) => {
       date: "2025-08-13",
       description: "다인이의 순간을 담은 로컬 영상입니다.",
     },
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+  ]; //.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   useEffect(() => {
     if (!document.getElementById("youtube-api")) {
@@ -522,20 +522,22 @@ const VideoGallery = ({ onBack }) => {
         if (entry.isIntersecting) {
           const { videoId, videoSrc } = entry.target.dataset;
           obs.unobserve(entry.target);
-          if (videoSrc) {
+          const numericId = parseInt(videoId, 10);
+
+          // 특정 ID(48, 49)는 썸네일 생성을 건너뜁니다
+          if (videoSrc && numericId !== 48 && numericId !== 49) {
             createThumbnail(videoSrc)
               .then((thumb) => {
                 setLocalThumbnails((prev) => ({
                   ...prev,
-                  [parseInt(videoId, 10)]: thumb,
+                  [numericId]: thumb,
                 }));
               })
               .catch((err) => {
                 console.error("Thumbnail creation failed for:", videoId, err);
-                // *** 실패 시 'failed' 상태를 저장하여 더 이상 시도하지 않음 ***
                 setLocalThumbnails((prev) => ({
                   ...prev,
-                  [parseInt(videoId, 10)]: "failed",
+                  [numericId]: "failed",
                 }));
               });
           }
@@ -566,44 +568,11 @@ const VideoGallery = ({ onBack }) => {
       className="video-gallery-container"
       style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}
     >
-      <div
-        className="video-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "30px",
-          padding: "20px",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "12px",
-        }}
-      >
-        <button
-          className="fortune-btn"
-          onClick={onBack}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontSize: "16px",
-          }}
-        >
+      <div className="video-header">
+        <button className="fortune-btn" onClick={onBack}>
           ← 돌아가기
         </button>
-        <h1
-          className="video-title"
-          style={{
-            margin: 0,
-            fontSize: "24px",
-            fontWeight: "bold",
-            color: "#333",
-          }}
-        >
-          🎬 다인이 동영상 갤러리
-        </h1>
+        <h1 className="video-title">🎬 다인이 동영상 갤러리</h1>
         <div style={{ width: "86px" }} />
       </div>
 
