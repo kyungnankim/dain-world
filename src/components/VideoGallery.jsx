@@ -9,7 +9,8 @@ const createThumbnail = (videoSrc) => {
     videoElement.src = videoSrc;
     videoElement.crossOrigin = "anonymous";
     videoElement.onloadeddata = () => {
-      videoElement.currentTime = 1; // 1초 시점의 프레임 캡처
+      // 0.1초 시점으로 빠르게 탐색하여 썸네일을 생성합니다.
+      videoElement.currentTime = 0.1;
     };
     videoElement.onseeked = () => {
       const canvas = document.createElement("canvas");
@@ -72,7 +73,7 @@ const VideoGallery = ({ onBack }) => {
   const observer = useRef(null);
 
   const allVideos = [
-    // ... (기존 비디오 데이터는 생략)
+    // ... (기존 비디오 데이터는 양이 많아 생략)
     {
       id: 1,
       type: "youtube",
@@ -469,7 +470,7 @@ const VideoGallery = ({ onBack }) => {
     },
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // *** 썸네일 지연 생성을 위한 IntersectionObserver 설정 ***
+  // *** 성능 개선: IntersectionObserver 로직 최적화 ***
   useEffect(() => {
     // YouTube API 스크립트는 한 번만 로드합니다.
     if (!document.getElementById("youtube-api")) {
@@ -480,41 +481,45 @@ const VideoGallery = ({ onBack }) => {
       document.head.appendChild(script);
       window.onYouTubeIframeAPIReady = () => console.log("YouTube API loaded");
     }
+
+    // Observer 콜백: 화면에 요소가 나타나면 실행됩니다.
+    const handleIntersect = (entries, obs) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const { videoId, videoSrc } = entry.target.dataset;
+          // 한 번만 실행되도록 관찰을 중지합니다.
+          obs.unobserve(entry.target);
+          if (videoSrc) {
+            createThumbnail(videoSrc)
+              .then((thumb) => {
+                setLocalThumbnails((prev) => ({
+                  ...prev,
+                  [parseInt(videoId, 10)]: thumb,
+                }));
+              })
+              .catch((err) =>
+                console.error("Thumbnail creation failed for:", videoId, err)
+              );
+          }
+        }
+      });
+    };
+
+    // Observer를 생성합니다.
+    const currentObserver = new IntersectionObserver(handleIntersect, {
+      rootMargin: "200px",
+    });
+    observer.current = currentObserver;
+
+    return () => currentObserver.disconnect();
+  }, []); // 의존성 배열을 비워 최초 한 번만 실행되도록 합니다.
+
+  // 로컬 비디오 카드에 observer를 연결하는 ref 콜백입니다.
+  const localVideoCardRef = useCallback((node) => {
+    if (node && observer.current) {
+      observer.current.observe(node);
+    }
   }, []);
-
-  const localVideoCardRef = useCallback(
-    (node) => {
-      if (observer.current) observer.current.disconnect();
-
-      observer.current = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const videoId = parseInt(entry.target.dataset.videoId, 10);
-              const videoSrc = entry.target.dataset.videoSrc;
-
-              // 이미 썸네일이 있거나 생성 중이면 실행하지 않음
-              if (localThumbnails[videoId] || !videoSrc) return;
-
-              // 관찰 중지 후 썸네일 생성
-              observer.current.unobserve(entry.target);
-              createThumbnail(videoSrc)
-                .then((thumb) => {
-                  setLocalThumbnails((prev) => ({ ...prev, [videoId]: thumb }));
-                })
-                .catch((err) =>
-                  console.error("Thumbnail creation failed:", err)
-                );
-            }
-          });
-        },
-        { rootMargin: "200px" }
-      );
-
-      if (node) observer.current.observe(node);
-    },
-    [localThumbnails]
-  ); // localThumbnails가 변경될 때 observer를 재설정하여 새 노드를 관찰
 
   const handlePlay = (id) => {
     setPlayingVideoId(playingVideoId === id ? null : id);
@@ -525,31 +530,8 @@ const VideoGallery = ({ onBack }) => {
       className="video-gallery-container"
       style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}
     >
-      <div
-        className="video-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "30px",
-          padding: "20px",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "12px",
-        }}
-      >
-        <button
-          className="fortune-btn"
-          onClick={onBack}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontSize: "16px",
-          }}
-        >
+      <div className="video-header">
+        <button className="fortune-btn" onClick={onBack}>
           ← 돌아가기
         </button>
         <h1
@@ -577,7 +559,6 @@ const VideoGallery = ({ onBack }) => {
         {allVideos.map((video) => (
           <div
             key={video.id}
-            // *** 로컬 비디오인 경우에만 ref와 data 속성을 추가하여 관찰 대상으로 지정 ***
             ref={video.type === "local" ? localVideoCardRef : null}
             data-video-id={video.id}
             data-video-src={video.localSrc || ""}
@@ -638,7 +619,12 @@ const VideoGallery = ({ onBack }) => {
                     <video
                       controls
                       autoPlay
-                      style={{ width: "100%", height: "100%" }}
+                      // *** 크기 문제 해결: object-fit 속성 추가 ***
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
                       preload="auto"
                       playsInline
                     >
@@ -675,11 +661,6 @@ const VideoGallery = ({ onBack }) => {
                     <div
                       style={{
                         fontSize: "48px",
-                        backgroundColor: "rgba(0,0,0,0.7)",
-                        borderRadius: "50%",
-                        padding: "20px",
-                        color: "white",
-                        transition: "transform 0.2s",
                         display:
                           video.type === "local" && !localThumbnails[video.id]
                             ? "none"
