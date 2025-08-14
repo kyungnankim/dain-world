@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 
 const Doljanchi = ({ partyDate }) => {
   const [dDay, setDDay] = useState("");
+  const [selectedMapType, setSelectedMapType] = useState("google"); // 구글맵을 기본값으로
 
   useEffect(() => {
     const dolPartyDate = new Date(partyDate);
@@ -30,7 +31,7 @@ const Doljanchi = ({ partyDate }) => {
     lng: 126.8015,
   };
 
-  // 카카오맵으로 길찾기
+  // 카카오맵으로 길찾기 (지도 검색)
   const openKakaoMap = () => {
     const query = encodeURIComponent(hotelInfo.address);
     window.open(`https://map.kakao.com/link/search/${query}`, "_blank");
@@ -48,11 +49,10 @@ const Doljanchi = ({ partyDate }) => {
     window.open(`https://maps.google.com/maps?q=${query}`, "_blank");
   };
 
-  // 카카오네비로 목적지 설정
+  // 카카오네비로 목적지 설정 (다시 추가)
   const openKakaoNavi = () => {
     const naviUrl = `kakaomap://route?ep=${hotelInfo.lng},${hotelInfo.lat}&by=CAR`;
 
-    // 모바일에서는 앱으로, PC에서는 웹으로
     const isMobile =
       /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
@@ -82,7 +82,15 @@ const Doljanchi = ({ partyDate }) => {
     }
   };
 
-  // 네이버네비로 목적지 설정
+  // 구글맵 네비로 목적지 설정 (안정적)
+  const openGoogleNavi = () => {
+    const naviUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+      hotelInfo.address
+    )}`;
+    window.open(naviUrl, "_blank");
+  };
+
+  // 네이버네비로 목적지 설정 (한국 최적화)
   const openNaverNavi = () => {
     const naviUrl = `nmap://route/car?dlat=${hotelInfo.lat}&dlng=${
       hotelInfo.lng
@@ -112,6 +120,31 @@ const Doljanchi = ({ partyDate }) => {
         )}`,
         "_blank"
       );
+    }
+  };
+
+  // 티맵으로 목적지 설정 (추가 옵션)
+  const openTmap = () => {
+    const tmapUrl = `tmap://route?goalname=${encodeURIComponent(
+      hotelInfo.name
+    )}&goalx=${hotelInfo.lng}&goaly=${hotelInfo.lat}`;
+
+    const isMobile =
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    if (isMobile) {
+      // 모바일: 티맵 앱 실행 시도
+      window.location.href = tmapUrl;
+
+      // 앱이 없으면 구글맵으로 대체
+      setTimeout(() => {
+        openGoogleNavi();
+      }, 3000);
+    } else {
+      // PC에서는 구글맵으로 대체
+      openGoogleNavi();
     }
   };
 
@@ -232,31 +265,36 @@ const Doljanchi = ({ partyDate }) => {
         >
           🗺️ 오시는 길
         </h3>
-
-        {/* 실제 호텔 위치 지도 */}
+        {/* 주소 정보 및 사용 팁 */}
         <div
           style={{
-            width: "100%",
-            height: "200px",
-            borderRadius: "10px",
-            overflow: "hidden",
-            marginBottom: "15px",
-            border: "2px solid #ffc0cb",
+            backgroundColor: "#f8f9fa",
+            padding: "15px",
+            borderRadius: "8px",
+            textAlign: "center",
           }}
         >
-          <iframe
-            src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dw901SwHHrMPTe&q=${encodeURIComponent(
-              hotelInfo.address
-            )}&zoom=16`}
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            allowFullScreen=""
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          ></iframe>
+          <p
+            style={{
+              margin: "0 0 10px 0",
+              fontSize: "14px",
+              fontWeight: "bold",
+              color: "#d63384",
+            }}
+          >
+            🏨 {hotelInfo.name}
+          </p>
+          <p
+            style={{
+              margin: "0 0 15px 0",
+              fontSize: "13px",
+              color: "#666",
+              lineHeight: "1.4",
+            }}
+          >
+            📍 {hotelInfo.address}
+          </p>
         </div>
-
         {/* 실제 호텔 위치 지도 */}
         <div
           style={{
@@ -281,85 +319,7 @@ const Doljanchi = ({ partyDate }) => {
           ></iframe>
         </div>
 
-        {/* 지도 앱 버튼들 */}
-        <div style={{ marginBottom: "15px" }}>
-          <h4
-            style={{
-              textAlign: "center",
-              color: "#d63384",
-              marginBottom: "10px",
-              fontSize: "16px",
-            }}
-          >
-            🗺️ 지도에서 위치 확인
-          </h4>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: "8px",
-            }}
-          >
-            <button
-              onClick={openKakaoMap}
-              style={{
-                padding: "10px 6px",
-                backgroundColor: "#fee500",
-                color: "#000",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
-              onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
-            >
-              🗺️ 카카오맵
-            </button>
-
-            <button
-              onClick={openNaverMap}
-              style={{
-                padding: "10px 6px",
-                backgroundColor: "#03c75a",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
-              onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
-            >
-              🧭 네이버맵
-            </button>
-
-            <button
-              onClick={openGoogleMap}
-              style={{
-                padding: "10px 6px",
-                backgroundColor: "#4285f4",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
-              onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
-            >
-              🌍 구글맵
-            </button>
-          </div>
-        </div>
-
-        {/* 네비게이션 앱 버튼들 */}
+        {/* 네비게이션 앱 버튼들 - 카카오네비 다시 추가 */}
         <div style={{ marginBottom: "15px" }}>
           <h4
             style={{
@@ -376,17 +336,18 @@ const Doljanchi = ({ partyDate }) => {
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "10px",
+              marginBottom: "10px",
             }}
           >
             <button
               onClick={openKakaoNavi}
               style={{
-                padding: "12px 10px",
+                padding: "12px 8px",
                 backgroundColor: "#fee500",
                 color: "#000",
                 border: "2px solid #ffd700",
                 borderRadius: "10px",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "bold",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
@@ -401,22 +362,52 @@ const Doljanchi = ({ partyDate }) => {
                 e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
               }}
             >
-              🚗 카카오네비
-              <br />
-              <small style={{ fontSize: "10px", opacity: 0.8 }}>
-                목적지 설정
-              </small>
+              카카오네비
             </button>
 
             <button
+              onClick={openGoogleNavi}
+              style={{
+                padding: "12px 8px",
+                backgroundColor: "#4285f4",
+                color: "white",
+                border: "2px solid #1a73e8",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = "scale(1.05)";
+                e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = "scale(1)";
+                e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+              }}
+            >
+              구글맵
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "10px",
+            }}
+          >
+            <button
               onClick={openNaverNavi}
               style={{
-                padding: "12px 10px",
+                padding: "12px 8px",
                 backgroundColor: "#03c75a",
                 color: "white",
                 border: "2px solid #00b050",
                 borderRadius: "10px",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "bold",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
@@ -431,60 +422,35 @@ const Doljanchi = ({ partyDate }) => {
                 e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
               }}
             >
-              🧭 네이버네비
+              네이버 네비게이션
               <br />
-              <small style={{ fontSize: "10px", opacity: 0.8 }}>
-                목적지 설정
-              </small>
             </button>
-          </div>
-        </div>
 
-        {/* 주소 정보 */}
-        <div
-          style={{
-            backgroundColor: "#f8f9fa",
-            padding: "15px",
-            borderRadius: "8px",
-            textAlign: "center",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 10px 0",
-              fontSize: "14px",
-              fontWeight: "bold",
-              color: "#d63384",
-            }}
-          >
-            🏨 {hotelInfo.name}
-          </p>
-          <p
-            style={{
-              margin: "0",
-              fontSize: "13px",
-              color: "#666",
-              lineHeight: "1.4",
-            }}
-          >
-            📍 {hotelInfo.address}
-          </p>
-          <div
-            style={{
-              marginTop: "10px",
-              padding: "8px",
-              backgroundColor: "rgba(214, 51, 132, 0.1)",
-              borderRadius: "6px",
-              border: "1px dashed #d63384",
-            }}
-          >
-            <p style={{ margin: "0", fontSize: "11px", color: "#d63384" }}>
-              💡 <strong>네비게이션 팁:</strong>
-              <br />
-              위의 "네비로 주소찍기" 버튼을 누르면
-              <br />
-              자동으로 목적지가 설정됩니다!
-            </p>
+            <button
+              onClick={openTmap}
+              style={{
+                padding: "12px 8px",
+                backgroundColor: "#ff6b35",
+                color: "white",
+                border: "2px solid #e55100",
+                borderRadius: "10px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = "scale(1.05)";
+                e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = "scale(1)";
+                e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+              }}
+            >
+              티맵
+            </button>
           </div>
         </div>
       </div>
@@ -530,7 +496,15 @@ const Doljanchi = ({ partyDate }) => {
         <p>
           궁금한 사항이 있으시면 언제든 연락주세요 📞
           <br />
-          <span style={{ fontSize: "10px" }}>* 연락처는 별도 안내드립니다</span>
+          <span style={{ fontSize: "10px" }}>
+            헬퍼 연락처: <a href="tel:010-7503-6190">010-7503-6190</a>
+          </span>
+          <span style={{ fontSize: "10px" }}>
+            최영민 연락처: <a href="tel:010-9937-2374">010-9937-2374</a>
+          </span>
+          <span style={{ fontSize: "10px" }}>
+            김민경 연락처: <a href="tel:010-5751-7457">010-5751-7457</a>
+          </span>
         </p>
       </div>
     </div>
