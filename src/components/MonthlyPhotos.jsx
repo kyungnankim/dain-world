@@ -277,10 +277,6 @@ const MonthlyPhotos = ({
             <small>평균/월</small>
           </div>
         </div>
-        <p style={{ fontSize: "12px", color: "#666", marginTop: "10px" }}>
-          🔗 Cloudinary Storage 연동
-          {loading && <span> • 로딩 중...</span>}
-        </p>
       </div>
 
       <div className="monthly-content">

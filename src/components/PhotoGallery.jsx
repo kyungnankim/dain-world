@@ -165,7 +165,7 @@ function PhotoGallery({ photos = [] }) {
                     />
                   )}
 
-                  {/* 월 표시 배지 */}
+                  {/* 월 표시 배지 
                   <div
                     style={{
                       position: "absolute",
@@ -181,6 +181,7 @@ function PhotoGallery({ photos = [] }) {
                   >
                     {photo.month}월
                   </div>
+                  */}
                 </div>
               </SwiperSlide>
             );

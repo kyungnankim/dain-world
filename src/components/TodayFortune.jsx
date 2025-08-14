@@ -269,7 +269,7 @@ const TodayFortune = ({ photos = [] }) => {
             onError={handleImageError}
             onLoad={handleImageLoad}
             style={{
-              maxWidth: "200px",
+              maxWidth: "400px",
               maxHeight: "200px",
               objectFit: "cover",
               borderRadius: "10px",
@@ -279,7 +279,7 @@ const TodayFortune = ({ photos = [] }) => {
           />
         )}
 
-        {/* 월 정보 표시 */}
+        {/* 월 정보 표시 
         {selectedPhoto && (
           <div
             style={{
@@ -297,6 +297,7 @@ const TodayFortune = ({ photos = [] }) => {
             {selectedPhoto.month}월
           </div>
         )}
+          */}
       </div>
 
       <div

@@ -59,6 +59,7 @@ function PhotoUpload({
   };
 
   // 백엔드를 통한 업로드
+  /* 1장씩 업로드
   const handleUpload = async () => {
     if (previewImages.length === 0) return;
     setUploading(true);
@@ -104,7 +105,92 @@ function PhotoUpload({
       setUploading(false);
     }
   };
+*/
+  // PhotoUpload.jsx
 
+  // ✅ 새로운 업로드 함수 (파일을 하나씩 순차적으로 전송)
+  const handleUpload = async () => {
+    if (previewImages.length === 0) return;
+    setUploading(true);
+
+    const allUploadedPhotos = [];
+    const failedUploads = [];
+
+    try {
+      // Promise.all을 사용해 모든 파일 업로드를 동시에 시도
+      const uploadPromises = previewImages.map(async (item) => {
+        try {
+          const formData = new FormData();
+          formData.append("month", month);
+          formData.append("file", item.file, item.name);
+
+          console.log(`🚀 API로 '${item.name}' 파일 전송 시작...`);
+
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || `'${item.name}' 업로드 실패`);
+          }
+
+          console.log(`✅ '${item.name}' 업로드 성공:`, result.photos[0]);
+          return result.photos[0]; // 백엔드는 파일 1개만 처리하므로 첫 번째 결과 사용
+        } catch (uploadError) {
+          console.error(`💥 '${item.name}' 업로드 중 오류:`, uploadError);
+          failedUploads.push({ name: item.name, reason: uploadError.message });
+          return null; // 실패한 경우 null 반환
+        }
+      });
+
+      // 모든 업로드 작업이 끝날 때까지 기다림
+      const results = await Promise.all(uploadPromises);
+      const successfulUploads = results.filter((p) => p !== null); // 성공한 것만 필터링
+
+      if (successfulUploads.length === 0) {
+        throw new Error("모든 파일 업로드에 실패했습니다.");
+      }
+
+      // 성공한 사진들을 전체 사진 객체로 변환
+      const finalPhotos = successfulUploads.map((p) => ({
+        id: p.id,
+        url: p.url,
+        month: p.month,
+        name: p.name,
+        thumbnailUrl: generateCloudinaryUrl(
+          p.id,
+          "w_300,h_300,c_fill,q_auto,f_auto"
+        ),
+        fullUrl: generateCloudinaryUrl(
+          p.id,
+          "w_800,h_800,c_limit,q_auto,f_auto"
+        ),
+        createdAt: new Date().toISOString(),
+      }));
+
+      // 성공한 각 사진에 대해 상위 컴포넌트 상태 업데이트
+      finalPhotos.forEach(onPhotoUploaded);
+
+      // 업로드 성공 처리 (자동 이동 포함)
+      handleUploadSuccess(finalPhotos);
+
+      // 실패한 파일이 있다면 사용자에게 알림
+      if (failedUploads.length > 0) {
+        const failedFileNames = failedUploads.map((f) => f.name).join(", ");
+        alert(`${failedUploads.length}개 파일 업로드 실패: ${failedFileNames}`);
+      }
+
+      setPreviewImages([]);
+    } catch (error) {
+      console.error("💥 전체 업로드 과정 오류:", error);
+      alert(`업로드 실패:\n${error.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
   // 삭제할 사진 선택/해제
   const togglePhotoForDeletion = (photoId) => {
     setPhotosToDelete((prev) => {
@@ -165,7 +251,6 @@ function PhotoUpload({
         <h1>📷 {monthName} 사진 관리</h1>
       </div>
 
-      {/* --- 사진 추가 섹션 --- */}
       <div className="card" style={{ marginBottom: "30px" }}>
         <h3>새로운 사진 추가하기</h3>
         <div className="file-selector">

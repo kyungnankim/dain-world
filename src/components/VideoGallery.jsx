@@ -1,42 +1,44 @@
-// src/components/VideoGallery.jsx
+// src/components/VideoGallery.jsx - 개선된 버전
 import React from "react";
 
 const VideoGallery = ({ onBack }) => {
   const youtubeVideos = [
     {
       id: 1,
-      title: "다인이 첫 웃음 😊",
-      iframe: `<iframe src="https://www.youtube.com/embed/9wkbeXGS5v4?si=kit8PJO6F-6qOSZc" title="다인이 첫 웃음 😊" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`,
+      title: "[광고]엘라스틴 광고패러디",
+      videoId: "9wkbeXGS5v4",
       date: "2024-10-15",
-      description: "다인이가 처음으로 웃는 모습",
+      description:
+        "다인이의 첫 광고 패러디 영상입니다. 찰랑거리는 머릿결을 감상하세요.",
     },
     {
       id: 2,
-      title: "다인이 옹알이 🗣️",
-      iframe: `<iframe src="https://www.youtube.com/embed/QUZy_3dCGdk?si=KYkYEbccfX8lg9PY" title="다인이 옹알이 🗣️" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`,
+      title: "[다큐]여권사진편",
+      videoId: "QUZy_3dCGdk",
       date: "2024-11-20",
-      description: "다인이의 귀여운 옹알이",
+      description:
+        "생애 첫 여권 사진을 찍으러 간 날의 기록. 과연 다인이는 웃지 않고 찍을 수 있었을까요?",
     },
     {
       id: 3,
       title: "다인이 뒤집기 🤸‍♀️",
-      iframe: `<iframe src="https://www.youtube.com/embed/5q6fhAFXjH0?si=EIq-gAA6kkQs0dRB" title="다인이 뒤집기 🤸‍♀️" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`,
+      videoId: "5q6fhAFXjH0",
       date: "2024-12-01",
-      description: "다인이가 처음으로 뒤집는 순간",
+      description: "드디어 스스로 몸을 뒤집은 역사적인 순간!",
     },
     {
       id: 4,
-      title: "다인이 이유식 먹방 🍼",
-      iframe: `<iframe src="https://www.youtube.com/embed/1OVWaPMc-sY?si=3YaVueUh99sQiHFZ" title="다인이 이유식 먹방 🍼" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`,
+      title: "[효과]세상을 보며 환하게 웃는 다인이",
+      videoId: "1OVWaPMc-sY",
       date: "2025-01-10",
-      description: "다인이의 첫 이유식 도전",
+      description: "까르르 웃는 모습이 매력적인 다인이의 행복한 순간입니다.",
     },
     {
       id: 5,
-      title: "다인이와 함께하는 목욕시간 🛁",
-      iframe: `<iframe src="https://www.youtube.com/embed/bBXaXeWPiFM?si=pqiijBGi-ATcGrLM" title="다인이와 함께하는 목욕시간 🛁" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`,
+      title: "[다큐]다인이 첫 설 날",
+      videoId: "bBXaXeWPiFM",
       date: "2025-02-05",
-      description: "다인이의 즐거운 목욕시간",
+      description: "예쁜 한복을 입고 처음으로 설날을 맞이했어요.",
     },
   ];
 
@@ -47,39 +49,34 @@ const VideoGallery = ({ onBack }) => {
           ← 돌아가기
         </button>
         <h1 className="video-title">🎬 다인이 동영상 갤러리</h1>
-        <div></div>
+        {/* 헤더 균형을 위한 빈 div */}
+        <div style={{ width: "86px" }}></div>
       </div>
 
       <div className="video-content">
         {youtubeVideos.map((video) => (
-          <div key={video.id} className="video-item" style={{ marginBottom: "40px" }}>
-            <div className="responsive-video" dangerouslySetInnerHTML={{ __html: video.iframe }} />
-            <div className="video-info">
-              <h3>{video.title}</h3>
+          <div key={video.id} className="video-card">
+            <div className="video-info-header">
+              <h3 className="video-card-title">{video.title}</h3>
               <p className="video-date">{video.date}</p>
+            </div>
+
+            <div className="responsive-video-wrapper">
+              <iframe
+                src={`https://www.youtube.com/embed/${video.videoId}`}
+                title={video.title}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              ></iframe>
+            </div>
+
+            <div className="video-info-footer">
               <p className="video-description">{video.description}</p>
             </div>
           </div>
         ))}
       </div>
-
-      <style jsx>{`
-        .responsive-video {
-          position: relative;
-          width: 100%;
-          padding-bottom: 56.25%; /* 16:9 비율 */
-          height: 0;
-          overflow: hidden;
-        }
-        .responsive-video iframe {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border: 0;
-        }
-      `}</style>
     </div>
   );
 };

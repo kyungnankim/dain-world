@@ -163,10 +163,10 @@ h2 {
 .floating-buttons {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: 0px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 5px;
   z-index: 9999;
 }
 
@@ -218,14 +218,14 @@ h2 {
   background: linear-gradient(135deg, #e91e63, #ff80ab);
 }
 */
-/* === 4. 동영상 갤러리 (VideoGallery) === */
+/* === 4. 동영상 갤러리 (VideoGallery) - 개선된 스타일 === */
 .video-gallery-container {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: #fff0f5;
+  background-color: #fff0f5; /* 연한 핑크 배경 */
   overflow-y: auto;
   z-index: 1000;
   padding: 20px;
@@ -237,16 +237,89 @@ h2 {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 30px;
-  flex-wrap: wrap;
-  gap: 15px;
+  padding: 0 10px;
 }
 
 .video-title {
   color: #e91e63;
   margin: 0;
   font-size: 1.8em;
+  text-align: center;
 }
 
+/* 동영상 카드들이 나열될 컨텐츠 영역 */
+.video-content {
+  max-width: 700px; /* 최대 너비 지정 */
+  margin: 0 auto; /* 중앙 정렬 */
+}
+
+/* 개별 동영상 카드 스타일 */
+.video-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+  overflow: hidden; /* 모서리를 벗어나는 콘텐츠 숨기기 */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.video-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+
+/* 동영상 정보 헤더 (제목, 날짜) */
+.video-info-header {
+  padding: 20px 25px 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.video-card-title {
+  font-size: 1.3em;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.video-date {
+  font-size: 0.85em;
+  color: #999;
+  margin: 0;
+}
+
+/* 반응형 유튜브 영상을 위한 래퍼 */
+.responsive-video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 비율 유지 */
+  height: 0;
+  overflow: hidden;
+}
+
+.responsive-video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* 동영상 정보 푸터 (설명) */
+.video-info-footer {
+  padding: 20px 25px;
+}
+
+.video-description {
+  font-size: 1em;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
 /* === 5. 월별 사진 갤러리 (MonthlyPhotos) === */
 .monthly-photos-container {
   position: fixed;
@@ -781,7 +854,7 @@ h2 {
 @media (max-width: 768px) {
   .floating-btn {
     width: 50px;
-    height: 50px;
+    height: 20px;
     font-size: 1.5em;
   }
   .monthly-header,
