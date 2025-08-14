@@ -1,13 +1,22 @@
-// src/components/MonthlyPhotos.jsx
+// src/components/MonthlyPhotos.jsx - 상태 동기화 수정 버전
 import React, { useState, useEffect } from "react";
 import PhotoUpload from "./PhotoUpload";
+import { getMonthlyPhotos } from "../utils/cloudinary";
 
-const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
+const MonthlyPhotos = ({
+  onBack,
+  photos = [],
+  onDeletePhotos,
+  onAddPhoto,
+  onRefresh,
+}) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
   const [uploadMonth, setUploadMonth] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [imageErrors, setImageErrors] = useState(new Set());
+  const [monthlyPhotosCache, setMonthlyPhotosCache] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     console.log("MonthlyPhotos - 받은 사진 개수:", photos.length);
@@ -17,7 +26,7 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
   // 월별 정보
   const months = [
     { month: 1, name: "1월", emoji: "❄️", color: "#87CEEB" },
-    { month: 2, name: "2월", emoji: "💝", color: "#FFB6C1" },
+    { month: 2, name: "2월", emoji: "💕", color: "#FFB6C1" },
     { month: 3, name: "3월", emoji: "🌸", color: "#98FB98" },
     { month: 4, name: "4월", emoji: "🌷", color: "#DDA0DD" },
     { month: 5, name: "5월", emoji: "🌹", color: "#F0E68C" },
@@ -30,11 +39,56 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
     { month: 12, name: "12월", emoji: "🎄", color: "#90EE90" },
   ];
 
-  // 월별 사진들을 props로 받은 photos에서 직접 가져옵니다.
+  // 월별 사진들을 가져오는 함수 (캐시 활용)
   const getPhotosForMonth = (monthNum) => {
-    const monthPhotos = photos.filter((p) => p.month === monthNum);
-    console.log(`${monthNum}월 사진 개수:`, monthPhotos.length);
-    return monthPhotos;
+    // 먼저 props에서 받은 photos 확인
+    const propsPhotos = photos.filter((p) => p.month === monthNum);
+
+    // 캐시된 데이터가 있으면 합치기
+    const cachedPhotos = monthlyPhotosCache[monthNum] || [];
+
+    // 중복 제거 (id 기준)
+    const allPhotos = [...propsPhotos];
+    cachedPhotos.forEach((cached) => {
+      if (!allPhotos.find((p) => p.id === cached.id)) {
+        allPhotos.push(cached);
+      }
+    });
+
+    // 최신순 정렬
+    allPhotos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    console.log(`${monthNum}월 사진 개수:`, allPhotos.length);
+    return allPhotos;
+  };
+
+  // 특정 월의 모든 사진을 Cloudinary에서 직접 가져오기
+  const loadMonthlyPhotos = async (monthNum) => {
+    if (monthlyPhotosCache[monthNum]) {
+      console.log(`${monthNum}월 캐시된 데이터 사용`);
+      return monthlyPhotosCache[monthNum];
+    }
+
+    try {
+      setLoading(true);
+      console.log(`🔍 ${monthNum}월 사진을 Cloudinary에서 직접 로드...`);
+
+      const monthPhotos = await getMonthlyPhotos(monthNum);
+
+      // 캐시에 저장
+      setMonthlyPhotosCache((prev) => ({
+        ...prev,
+        [monthNum]: monthPhotos,
+      }));
+
+      console.log(`✅ ${monthNum}월: ${monthPhotos.length}장 로드 완료`);
+      return monthPhotos;
+    } catch (error) {
+      console.error(`❌ ${monthNum}월 사진 로드 실패:`, error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 전체 통계 계산
@@ -49,9 +103,19 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
     return { totalPhotos, monthsWithPhotos, averagePerMonth };
   };
 
-  const handleMonthSelect = (monthNum) => {
+  const handleMonthSelect = async (monthNum) => {
     console.log(`${monthNum}월 선택됨`);
-    setSelectedMonth((prevMonth) => (prevMonth === monthNum ? null : monthNum));
+
+    if (selectedMonth === monthNum) {
+      // 같은 월을 다시 클릭하면 닫기
+      setSelectedMonth(null);
+      return;
+    }
+
+    setSelectedMonth(monthNum);
+
+    // 해당 월의 모든 사진을 로드
+    await loadMonthlyPhotos(monthNum);
   };
 
   const openModal = (photo) => {
@@ -75,7 +139,56 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
     });
   };
 
-  // 'Esc' 키로 모달을 닫는 기능을 추가합니다.
+  // MonthlyPhotos.jsx
+
+  // ✅ 업로드 완료 후 상태 동기화 (수정된 버전)
+  const handlePhotoUploaded = async (newPhoto) => {
+    console.log("📷 새 사진 업로드됨:", newPhoto);
+
+    // 1. 상위 컴포넌트(App.jsx)에 새 사진 정보 전달
+    onAddPhoto(newPhoto);
+
+    // 2. 현재 컴포넌트의 월별 캐시에서 해당 월의 데이터만 제거
+    //    다음에 이 월을 클릭할 때 API를 통해 최신 데이터를 다시 불러오게 함
+    setMonthlyPhotosCache((prev) => {
+      const updatedCache = { ...prev };
+      delete updatedCache[newPhoto.month];
+      console.log(`🗑️ ${newPhoto.month}월 캐시를 비웠습니다.`);
+      return updatedCache;
+    });
+
+    // 3. 업로드 UI 닫기 및 월별 갤러리로 돌아가기
+    setShowUpload(false);
+
+    // 4. 현재 선택된 월에 사진을 추가했다면, 잠시 후 해당 월의 사진 목록을 다시 로드
+    if (selectedMonth === newPhoto.month) {
+      console.log(`🔄 ${newPhoto.month}월 사진 목록을 새로고침합니다.`);
+      // API 반영 시간을 고려하여 약간의 딜레이 후 로드
+      setTimeout(() => {
+        loadMonthlyPhotos(newPhoto.month);
+      }, 500);
+    }
+  };
+  // 삭제 완료 후 캐시 새로고침
+  const handlePhotosDeleted = (deletedIds) => {
+    console.log("🗑️ 사진 삭제됨:", deletedIds);
+
+    // 상위 컴포넌트에 알림
+    onDeletePhotos(deletedIds);
+
+    // 캐시에서도 제거
+    setMonthlyPhotosCache((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((month) => {
+        updated[month] = updated[month].filter(
+          (p) => !deletedIds.includes(p.id)
+        );
+      });
+      return updated;
+    });
+  };
+
+  // 'Esc' 키로 모달을 닫는 기능
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") closeModal();
@@ -86,7 +199,7 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
     }
   }, [selectedImage]);
 
-  // 사진 업로드 화면을 보여줄 때
+  // 사진 업로드 화면
   if (showUpload) {
     const monthInfo = months.find((m) => m.month === uploadMonth);
     return (
@@ -94,9 +207,10 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
         month={uploadMonth}
         monthName={monthInfo?.name}
         onBack={() => setShowUpload(false)}
-        onPhotoUploaded={onAddPhoto}
+        onPhotoUploaded={handlePhotoUploaded}
         existingPhotos={getPhotosForMonth(uploadMonth)}
-        onDeleteSelectedPhotos={onDeletePhotos}
+        onDeleteSelectedPhotos={handlePhotosDeleted}
+        onRefresh={onRefresh}
       />
     );
   }
@@ -115,7 +229,14 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
           <h1>월별 사진 갤러리</h1>
           <span className="month-emoji-large">📸</span>
         </div>
-        <div />
+        <button
+          className="fortune-btn"
+          onClick={onRefresh}
+          style={{ backgroundColor: "#4CAF50" }}
+          title="전체 새로고침"
+        >
+          🔄
+        </button>
       </div>
 
       {/* 전체 통계 표시 */}
@@ -139,7 +260,7 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
           <div>
             <strong style={{ color: "#ff69b4" }}>{stats.totalPhotos}</strong>
             <br />
-            <small>총 사진</small>
+            <small>이 사진</small>
           </div>
           <div>
             <strong style={{ color: "#4CAF50" }}>
@@ -156,6 +277,10 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
             <small>평균/월</small>
           </div>
         </div>
+        <p style={{ fontSize: "12px", color: "#666", marginTop: "10px" }}>
+          🔗 Cloudinary Storage 연동
+          {loading && <span> • 로딩 중...</span>}
+        </p>
       </div>
 
       <div className="monthly-content">
@@ -175,6 +300,8 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
                   border: isSelected
                     ? "3px solid #ff69b4"
                     : "2px solid transparent",
+                  opacity:
+                    loading && selectedMonth === monthInfo.month ? 0.7 : 1,
                 }}
                 onClick={() => handleMonthSelect(monthInfo.month)}
               >
@@ -183,7 +310,9 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
                     className="compact-month-emoji"
                     style={{ fontSize: "24px" }}
                   >
-                    {monthInfo.emoji}
+                    {loading && selectedMonth === monthInfo.month
+                      ? "⏳"
+                      : monthInfo.emoji}
                   </div>
                   <div style={{ fontWeight: "bold", fontSize: "14px" }}>
                     {monthInfo.name}
@@ -217,7 +346,7 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
                   사진
                 </h3>
                 <span className="selected-photo-count">
-                  총 {getPhotosForMonth(selectedMonth).length}장
+                  이 {getPhotosForMonth(selectedMonth).length}장
                 </span>
               </div>
               <button
@@ -275,6 +404,7 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
                           alt={photo.alt || photo.name}
                           className="selected-photo-thumbnail"
                           loading="lazy"
+                          decoding="async"
                           onLoad={() => handleImageLoad(photo.id)}
                           onError={() => handleImageError(photo.id, imageUrl)}
                           style={{
@@ -325,7 +455,7 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
                   {months.find((m) => m.month === selectedMonth)?.name}에는 아직
                   사진이 없어요
                 </h4>
-                <p>첫 번째 사진을 업로드해보세요!</p>
+                <p>첫 번째 사진을 Cloudinary에 업로드해보세요!</p>
                 <button
                   className="fortune-btn"
                   onClick={() => {
@@ -431,8 +561,16 @@ const MonthlyPhotos = ({ onBack, photos = [], onDeletePhotos, onAddPhoto }) => {
                 {selectedImage.month}월 • {selectedImage.name || "다인이 사진"}
               </div>
               <div style={{ fontSize: "12px", color: "#666" }}>
-                {selectedImage.createdAt &&
-                  new Date(selectedImage.createdAt).toLocaleDateString("ko-KR")}
+                📁 Cloudinary Storage
+                {selectedImage.createdAt && (
+                  <span>
+                    {" "}
+                    •{" "}
+                    {new Date(selectedImage.createdAt).toLocaleDateString(
+                      "ko-KR"
+                    )}
+                  </span>
+                )}
               </div>
             </div>
           </div>

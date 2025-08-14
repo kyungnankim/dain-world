@@ -11,8 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "cloudinary": "^2.7.0",
     "crypto-js": "^4.2.0",
     "firebase": "^12.1.0",
+    "formidable": "^3.5.4",
     "imagekit": "^4.1.4",
     "node-fetch": "^3.3.2",
     "react": "^19.1.1",

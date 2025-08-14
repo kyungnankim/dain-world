@@ -1,5 +1,5 @@
-// src/App.jsx - 숫자 폴더명으로 API 호출
-import React, { useState, useEffect } from "react";
+// App.jsx - 상태 동기화 강화 버전
+import React, { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import Welcome from "./components/Welcome";
 import Profile from "./components/Profile";
@@ -11,112 +11,99 @@ import FeedingGame from "./components/FeedingGame";
 import FloatingButtons from "./components/FloatingButtons";
 import VideoGallery from "./components/VideoGallery";
 import MonthlyPhotos from "./components/MonthlyPhotos";
-
-const dainInfo = {
-  birthday: "2024-09-23",
-  dolPartyDate: "2025-09-13",
-};
+import { getAllPhotos } from "./utils/cloudinary";
 
 function App() {
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [currentView, setCurrentView] = useState("main");
-  const [photos, setPhotos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [apiStatus, setApiStatus] = useState("loading"); // loading, success, failed
+  const [allPhotos, setAllPhotos] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // ✅ 사진을 불러오는 함수 (강화된 버전)
+  const fetchCloudinaryPhotos = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log("🚀 Cloudinary에서 사진 불러오기 시작...");
+      const photos = await getAllPhotos();
+
+      setAllPhotos(photos);
+      console.log("✅ 사진 로드 성공:", photos.length, "장");
+      console.log("📋 로드된 사진 데이터:", photos);
+    } catch (error) {
+      console.error("❌ Cloudinary 사진 로드 실패:", error);
+      setError(error.message);
+      setAllPhotos([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const isMobile = () => window.innerWidth <= 768;
 
-  // 모든 월별 사진 불러오기 (숫자 폴더명 사용)
-  const loadAllPhotos = async () => {
-    try {
-      setLoading(true);
-      setApiStatus("loading");
-      console.log("🔍 API로 사진 로드 시도 (숫자 폴더명)...");
-
-      // 먼저 API 서버가 작동하는지 확인
-      const authResponse = await fetch("/api/getImageKitAuth");
-
-      if (!authResponse.ok) {
-        throw new Error(`Auth API 실패: ${authResponse.status}`);
-      }
-
-      const authData = await authResponse.json();
-      console.log("✅ ImageKit 인증 성공:", {
-        hasToken: !!authData.token,
-        hasPublicKey: !!authData.publicKey,
-        urlEndpoint: authData.urlEndpoint,
-      });
-
-      const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-      const allPhotos = [];
-
-      for (const month of months) {
-        try {
-          console.log(`📂 ${month}번 폴더에서 사진 로드 중...`);
-
-          // 숫자 폴더명으로 API 호출
-          const response = await fetch(`/api/getMonthlyPhotos?folder=${month}`);
-
-          if (response.ok) {
-            const monthPhotos = await response.json();
-            console.log(`✅ ${month}번 폴더: ${monthPhotos.length}장 로드`);
-
-            const photosWithMonth = monthPhotos.map((photo, index) => ({
-              ...photo,
-              month: month,
-              id: `api-${month}-${Date.now()}-${index}`,
-              name: photo.name || photo.alt || `${month}월 다인이`,
-            }));
-            allPhotos.push(...photosWithMonth);
-          } else {
-            console.log(
-              `⚠️ ${month}번 폴더: ${response.status} ${response.statusText}`
-            );
-          }
-        } catch (error) {
-          console.error(`❌ ${month}번 폴더 로드 실패:`, error.message);
-        }
-      }
-
-      if (allPhotos.length > 0) {
-        console.log(`🎉 API 성공: 총 ${allPhotos.length}장 로드`);
-        setPhotos(allPhotos);
-        setApiStatus("success");
-      } else {
-        throw new Error("API에서 사진을 가져오지 못함");
-      }
-    } catch (error) {
-      console.error("❌ API 전체 실패:", error.message);
-      console.log("📭 API 실패 - 사진 없음");
-      setPhotos([]);
-      setApiStatus("failed");
-    } finally {
-      setLoading(false);
+  // 앱 시작시 사진 로드
+  useEffect(() => {
+    if (!isMobile()) {
+      fetchCloudinaryPhotos();
     }
+  }, [fetchCloudinaryPhotos]);
+
+  const dainInfo = {
+    birthday: "2024-09-23",
+    dolPartyDate: "2025-09-13",
   };
 
-  // 컴포넌트 마운트 시 사진 로드
-  useEffect(() => {
-    loadAllPhotos();
-  }, []);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [currentView, setCurrentView] = useState("main");
+
+  const handleEnterSite = () => {
+    setShowWelcome(false);
+    fetchCloudinaryPhotos();
+  };
 
   const showGame = () => setCurrentView("game");
   const showVideo = () => setCurrentView("video");
   const showMonthlyPhotos = () => setCurrentView("monthly");
   const showMain = () => setCurrentView("main");
 
-  // 사진 추가 핸들러
-  const handleAddPhoto = (newPhoto) => {
-    setPhotos((prev) => [...prev, newPhoto]);
-    console.log("새 사진 추가됨:", newPhoto);
+  // ✅ 사진 삭제 핸들러 (강화된 버전)
+  const handlePhotoDelete = (photoIdsToDelete) => {
+    console.log("🗑️ 사진 삭제 요청:", photoIdsToDelete);
+    setAllPhotos((prevPhotos) => {
+      const filteredPhotos = prevPhotos.filter(
+        (p) => !photoIdsToDelete.includes(p.id)
+      );
+      console.log(`📊 삭제 후 남은 사진: ${filteredPhotos.length}장`);
+      return filteredPhotos;
+    });
   };
 
-  // 사진 삭제 핸들러
-  const handleDeletePhotos = (photoIdsToDelete) => {
-    setPhotos((prev) =>
-      prev.filter((photo) => !photoIdsToDelete.includes(photo.id))
-    );
-    console.log("삭제된 사진 IDs:", photoIdsToDelete);
+  // App.jsx
+
+  // ✅ 사진 추가 핸들러 (수정된 버전)
+  const handlePhotoAdd = (newPhoto) => {
+    console.log("📷 새 사진 추가 요청:", newPhoto);
+
+    // 즉시 상태에 추가하여 UI에 반영
+    setAllPhotos((prevPhotos) => {
+      // 중복 추가 방지
+      if (prevPhotos.find((p) => p.id === newPhoto.id)) {
+        return prevPhotos;
+      }
+      const updatedPhotos = [newPhoto, ...prevPhotos];
+      console.log(`📊 추가 후 총 사진: ${updatedPhotos.length}장`);
+      return updatedPhotos;
+    });
+  };
+  // ✅ 사진 목록 새로고침 (디버깅 강화)
+  const refreshPhotos = async () => {
+    console.log("🔄 수동 새로고침 시작...");
+    try {
+      await fetchCloudinaryPhotos();
+      console.log("✅ 수동 새로고침 완료");
+    } catch (error) {
+      console.error("❌ 수동 새로고침 실패:", error);
+    }
   };
 
   const renderCurrentView = () => {
@@ -129,9 +116,10 @@ function App() {
         return (
           <MonthlyPhotos
             onBack={showMain}
-            photos={photos}
-            onAddPhoto={handleAddPhoto}
-            onDeletePhotos={handleDeletePhotos}
+            photos={allPhotos}
+            onDeletePhotos={handlePhotoDelete}
+            onAddPhoto={handlePhotoAdd}
+            onRefresh={refreshPhotos}
           />
         );
       case "main":
@@ -141,83 +129,62 @@ function App() {
             {showWelcome && isMobile() && (
               <Welcome
                 partyDate={dainInfo.dolPartyDate}
-                onEnter={() => setShowWelcome(false)}
+                onEnter={handleEnterSite}
               />
             )}
             <div className="container">
               <h1>♡ 최다인 월드 ♡</h1>
+
               <Profile birthday={dainInfo.birthday} />
               <Anniversary birthday={dainInfo.birthday} />
               <Doljanchi partyDate={dainInfo.dolPartyDate} />
 
-              {/* 먹이기 게임 */}
               <div
                 className="card"
                 style={{ marginTop: "40px", backgroundColor: "#fff0f5" }}
               >
                 <h2>✨ 다인이 맘마주기 게임 ✨</h2>
-                <p>다인이에게 맛있는 맛있는 맘마를 주세요!</p>
                 <button className="fortune-btn" onClick={showGame}>
                   게임 시작하기
                 </button>
               </div>
 
-              {/* 사진 갤러리 */}
-              {loading ? (
-                <div className="card">
-                  <h2>📸 다인이의 성장 앨범</h2>
-                  <div style={{ textAlign: "center", padding: "40px" }}>
-                    <p>사진을 불러오는 중... 📷</p>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#666",
-                        marginTop: "10px",
-                      }}
-                    >
-                      API 서버에서 ImageKit 이미지를 가져오고 있습니다
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <PhotoGallery photos={photos} />
-              )}
+              <PhotoGallery photos={allPhotos} />
+              <TodayFortune photos={allPhotos} />
 
-              {/* 오늘의 운세 */}
-              <TodayFortune photos={photos} />
-
-              {/* API 상태 표시 */}
+              {/* ✅ 디버깅 정보 추가 */}
               <div
-                className="card"
                 style={{
-                  marginTop: "20px",
+                  textAlign: "center",
+                  padding: "10px",
                   fontSize: "12px",
                   color: "#666",
-                  textAlign: "center",
+                  borderTop: "1px solid #eee",
+                  marginTop: "40px",
                 }}
               >
-                {apiStatus === "success" && (
-                  <p>
-                    ✅ <strong>API 연결 성공:</strong> {photos.length}장의 실제
-                    ImageKit 사진 로드됨
-                  </p>
-                )}
-                {apiStatus === "failed" && (
-                  <div>
-                    <p>
-                      ⚠️ <strong>API 연결 실패:</strong> 사진을 불러올 수
-                      없습니다
-                    </p>
-                    <p style={{ fontSize: "11px", marginTop: "5px" }}>
-                      API 사용하려면: <code>vercel dev</code> 명령어로 서버 실행
-                    </p>
-                  </div>
-                )}
-                {apiStatus === "loading" && (
-                  <p>
-                    🔄 <strong>API 연결 중...</strong>
-                  </p>
-                )}
+                🔗 Cloudinary Storage • {allPhotos.length}장의 사진
+                {isLoading && <span> • 🔄 로딩 중...</span>}
+                {error && <span style={{ color: "red" }}> • ❌ {error}</span>}
+              </div>
+
+              {/* ✅ 수동 새로고침 버튼 추가 (개발/디버깅용) */}
+              <div style={{ textAlign: "center", marginTop: "10px" }}>
+                <button
+                  onClick={refreshPhotos}
+                  disabled={isLoading}
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: "12px",
+                    backgroundColor: isLoading ? "#ccc" : "#4CAF50",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "20px",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isLoading ? "🔄 새로고침 중..." : "🔄 사진 새로고침"}
+                </button>
               </div>
             </div>
           </>
@@ -227,12 +194,18 @@ function App() {
 
   return (
     <>
-      {renderCurrentView()}
-      <FloatingButtons
-        onGoToMain={showMain}
-        onVideoClick={showVideo}
-        onMonthlyPhotosClick={showMonthlyPhotos}
-      />
+      {!showWelcome || !isMobile() ? (
+        <>
+          {renderCurrentView()}
+          <FloatingButtons
+            onGoToMain={showMain}
+            onVideoClick={showVideo}
+            onMonthlyPhotosClick={showMonthlyPhotos}
+          />
+        </>
+      ) : (
+        renderCurrentView()
+      )}
     </>
   );
 }
