@@ -299,7 +299,7 @@ const Doljanchi = ({ partyDate }) => {
           <p
             style={{
               margin: "0 0 10px 0",
-              fontSize: "14px",
+              fontSize: "20px",
               fontWeight: "bold",
               color: "#d63384",
             }}
@@ -309,7 +309,7 @@ const Doljanchi = ({ partyDate }) => {
           <p
             style={{
               margin: "0 0 15px 0",
-              fontSize: "13px",
+              fontSize: "20px",
               color: "#666",
               lineHeight: "1.4",
             }}
@@ -384,7 +384,7 @@ const Doljanchi = ({ partyDate }) => {
                 e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
               }}
             >
-              카카오네비
+              카카오맵
             </button>
 
             <button
@@ -444,7 +444,7 @@ const Doljanchi = ({ partyDate }) => {
                 e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
               }}
             >
-              네이버 네비게이션
+              네이버맵
               <br />
             </button>
 
@@ -481,7 +481,7 @@ const Doljanchi = ({ partyDate }) => {
       <div
         style={{
           backgroundColor: "rgba(214, 51, 132, 0.1)",
-          padding: "20px",
+          padding: "10px",
           borderRadius: "15px",
           textAlign: "center",
           border: "2px dashed #d63384",
@@ -511,7 +511,7 @@ const Doljanchi = ({ partyDate }) => {
         style={{
           textAlign: "center",
           marginTop: "20px",
-          fontSize: "12px",
+          fontSize: "16px",
           color: "#666",
         }}
       >

@@ -151,41 +151,6 @@ function App() {
 
               <PhotoGallery photos={allPhotos} />
               <TodayFortune photos={allPhotos} />
-
-              {/* ✅ 디버깅 정보 추가 */}
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "10px",
-                  fontSize: "12px",
-                  color: "#666",
-                  borderTop: "1px solid #eee",
-                  marginTop: "40px",
-                }}
-              >
-                🔗 Cloudinary Storage • {allPhotos.length}장의 사진
-                {isLoading && <span> • 🔄 로딩 중...</span>}
-                {error && <span style={{ color: "red" }}> • ❌ {error}</span>}
-              </div>
-
-              {/* ✅ 수동 새로고침 버튼 추가 (개발/디버깅용) */}
-              <div style={{ textAlign: "center", marginTop: "10px" }}>
-                <button
-                  onClick={refreshPhotos}
-                  disabled={isLoading}
-                  style={{
-                    padding: "8px 16px",
-                    fontSize: "12px",
-                    backgroundColor: isLoading ? "#ccc" : "#4CAF50",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "20px",
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {isLoading ? "🔄 새로고침 중..." : "🔄 사진 새로고침"}
-                </button>
-              </div>
             </div>
           </>
         );

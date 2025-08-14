@@ -339,7 +339,7 @@ const MonthlyPhotos = ({
                 </span>
                 <h3>
                   {months.find((m) => m.month === selectedMonth)?.name} 다인이
-                  사진 : {getPhotosForMonth(selectedMonth).length}장
+                  사진
                 </h3>
                 {/**   <span className="selected-photo-count"> {getPhotosForMonth(selectedMonth).length}장</span>*/}
 
@@ -417,7 +417,7 @@ const MonthlyPhotos = ({
                         />
                       )}
 
-                      {/* 사진 이름 표시 */}
+                      {/* 사진 이름 표시 
                       <div
                         style={{
                           position: "absolute",
@@ -436,6 +436,7 @@ const MonthlyPhotos = ({
                       >
                         {photo.name || "unnamed"}
                       </div>
+                      */}
                     </div>
                   );
                 })}

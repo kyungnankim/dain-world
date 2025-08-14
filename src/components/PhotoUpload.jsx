@@ -246,10 +246,10 @@ function PhotoUpload({
             </h4>
             <p style={{ margin: "5px 0 0 0", fontSize: "14px" }}>
               {needsDelete
-                ? `❌ 사진이 가득 찼습니다! 새로 업로드하려면 먼저 ${
+                ? `사진은 월마다 최대 3장 업로드 가능합니다. 새로 업로드하려면 먼저 ${
                     photosToDelete.size > 0 ? photosToDelete.size : 1
-                  }장 이상 삭제해주세요.`
-                : `✅ ${remainingSlots}장 더 업로드할 수 있습니다.`}
+                  }장 삭제해주세요.`
+                : `${remainingSlots}장 더 업로드할 수 있습니다.`}
             </p>
           </div>
         </div>
@@ -351,7 +351,7 @@ function PhotoUpload({
         <h3>
           기존 사진 관리 ({existingPhotos.length}장)
           {needsDelete && (
-            <span style={{ color: "#d32f2f" }}> - 삭제 필요!</span>
+            <span style={{ color: "#d32f2f" }}> - 삭제 필요</span>
           )}
         </h3>
 
@@ -359,9 +359,7 @@ function PhotoUpload({
           <>
             <p>
               {needsDelete
-                ? `⚠️ 새 사진을 업로드하려면 먼저 ${
-                    MAX_PHOTOS_PER_MONTH - remainingSlots
-                  }장 이상 삭제하세요.`
+                ? `⚠️ 새 사진을 업로드하려면 먼저사진을 삭제하세요. 사진은 최대 3장 보기 가능합니다.`
                 : "삭제할 사진을 선택하세요."}
             </p>
             <div className="preview-grid deletion-mode">
@@ -389,7 +387,6 @@ function PhotoUpload({
                 }}
               >
                 선택한 사진 삭제 ({photosToDelete.size}장)
-                {needsDelete && photosToDelete.size > 0 && " 🔥"}
               </button>
             </div>
           </>
