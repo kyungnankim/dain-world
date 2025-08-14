@@ -2,16 +2,23 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import video48 from "../assets/IMG_2025081321224470.MOV";
 import video49 from "../assets/IMG_2025081321224483.MOV";
 
-// 컴포넌트 외부로 썸네일 생성 함수를 분리하여 불필요한 재생성을 방지합니다.
+// *** 모바일 환경에 맞게 최적화하고, 실패 처리를 추가한 썸네일 생성 함수 ***
 const createThumbnail = (videoSrc) => {
   return new Promise((resolve, reject) => {
     const videoElement = document.createElement("video");
+
+    // 모바일 브라우저 정책 대응을 위한 속성 추가
+    videoElement.playsInline = true;
+    videoElement.muted = true;
+    videoElement.preload = "metadata";
+
     videoElement.src = videoSrc;
     videoElement.crossOrigin = "anonymous";
+
     videoElement.onloadeddata = () => {
-      // 0.1초 시점으로 빠르게 탐색하여 썸네일을 생성합니다.
       videoElement.currentTime = 0.1;
     };
+
     videoElement.onseeked = () => {
       const canvas = document.createElement("canvas");
       canvas.width = videoElement.videoWidth;
@@ -20,7 +27,11 @@ const createThumbnail = (videoSrc) => {
       ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL("image/jpeg"));
     };
+
     videoElement.onerror = (err) => reject(err);
+
+    // 일부 브라우저에서는 명시적으로 load()를 호출해야 할 수 있습니다.
+    videoElement.load();
   });
 };
 
@@ -470,9 +481,7 @@ const VideoGallery = ({ onBack }) => {
     },
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // *** 성능 개선: IntersectionObserver 로직 최적화 ***
   useEffect(() => {
-    // YouTube API 스크립트는 한 번만 로드합니다.
     if (!document.getElementById("youtube-api")) {
       const script = document.createElement("script");
       script.id = "youtube-api";
@@ -482,12 +491,10 @@ const VideoGallery = ({ onBack }) => {
       window.onYouTubeIframeAPIReady = () => console.log("YouTube API loaded");
     }
 
-    // Observer 콜백: 화면에 요소가 나타나면 실행됩니다.
     const handleIntersect = (entries, obs) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           const { videoId, videoSrc } = entry.target.dataset;
-          // 한 번만 실행되도록 관찰을 중지합니다.
           obs.unobserve(entry.target);
           if (videoSrc) {
             createThumbnail(videoSrc)
@@ -497,24 +504,27 @@ const VideoGallery = ({ onBack }) => {
                   [parseInt(videoId, 10)]: thumb,
                 }));
               })
-              .catch((err) =>
-                console.error("Thumbnail creation failed for:", videoId, err)
-              );
+              .catch((err) => {
+                console.error("Thumbnail creation failed for:", videoId, err);
+                // *** 실패 시 'failed' 상태를 저장하여 더 이상 시도하지 않음 ***
+                setLocalThumbnails((prev) => ({
+                  ...prev,
+                  [parseInt(videoId, 10)]: "failed",
+                }));
+              });
           }
         }
       });
     };
 
-    // Observer를 생성합니다.
     const currentObserver = new IntersectionObserver(handleIntersect, {
       rootMargin: "200px",
     });
     observer.current = currentObserver;
 
     return () => currentObserver.disconnect();
-  }, []); // 의존성 배열을 비워 최초 한 번만 실행되도록 합니다.
+  }, []);
 
-  // 로컬 비디오 카드에 observer를 연결하는 ref 콜백입니다.
   const localVideoCardRef = useCallback((node) => {
     if (node && observer.current) {
       observer.current.observe(node);
@@ -530,8 +540,31 @@ const VideoGallery = ({ onBack }) => {
       className="video-gallery-container"
       style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}
     >
-      <div className="video-header">
-        <button className="fortune-btn" onClick={onBack}>
+      <div
+        className="video-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "30px",
+          padding: "20px",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "12px",
+        }}
+      >
+        <button
+          className="fortune-btn"
+          onClick={onBack}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
           ← 돌아가기
         </button>
         <h1
@@ -552,148 +585,156 @@ const VideoGallery = ({ onBack }) => {
         className="video-content"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: "20px",
         }}
       >
-        {allVideos.map((video) => (
-          <div
-            key={video.id}
-            ref={video.type === "local" ? localVideoCardRef : null}
-            data-video-id={video.id}
-            data-video-src={video.localSrc || ""}
-            className="video-card"
-            style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "20px",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-              border: "1px solid #e1e5e9",
-            }}
-          >
-            <div className="video-info-header" style={{ marginBottom: "15px" }}>
-              <h3
-                style={{
-                  margin: "0 0 8px 0",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#333",
-                }}
-              >
-                {video.title}
-              </h3>
-              <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
-                {video.date}
-              </p>
-            </div>
+        {allVideos.map((video) => {
+          const thumbState = localThumbnails[video.id];
+          const isThumbLoading = video.type === "local" && !thumbState;
 
+          return (
             <div
-              className="responsive-video-wrapper"
+              key={video.id}
+              ref={video.type === "local" ? localVideoCardRef : null}
+              data-video-id={video.id}
+              data-video-src={video.localSrc || ""}
+              className="video-card"
               style={{
-                marginBottom: "15px",
-                position: "relative",
-                width: "100%",
-                paddingTop: "56.25%",
-                backgroundColor: "#000",
-                borderRadius: "8px",
-                overflow: "hidden",
+                backgroundColor: "white",
+                borderRadius: "12px",
+                padding: "20px",
+                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                border: "1px solid #e1e5e9",
               }}
             >
               <div
+                className="video-info-header"
+                style={{ marginBottom: "15px" }}
+              >
+                <h3
+                  style={{
+                    margin: "0 0 8px 0",
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    color: "#333",
+                  }}
+                >
+                  {video.title}
+                </h3>
+                <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+                  {video.date}
+                </p>
+              </div>
+
+              <div
+                className="responsive-video-wrapper"
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
+                  marginBottom: "15px",
+                  position: "relative",
                   width: "100%",
-                  height: "100%",
+                  paddingTop: "56.25%",
+                  backgroundColor: "#000",
+                  borderRadius: "8px",
+                  overflow: "hidden",
                 }}
               >
-                {playingVideoId === video.id ? (
-                  video.type === "youtube" ? (
-                    <YouTubePlayer
-                      videoId={video.videoId}
-                      onReady={(e) => e.target.playVideo()}
-                      onError={() => setPlayingVideoId(null)}
-                    />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  {playingVideoId === video.id ? (
+                    video.type === "youtube" ? (
+                      <YouTubePlayer
+                        videoId={video.videoId}
+                        onReady={(e) => e.target.playVideo()}
+                        onError={() => setPlayingVideoId(null)}
+                      />
+                    ) : (
+                      <video
+                        controls
+                        autoPlay
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                        preload="auto"
+                        playsInline
+                      >
+                        <source src={video.localSrc} type="video/mp4" />
+                        <source src={video.localSrc} type="video/mov" />
+                        비디오를 재생할 수 없습니다.
+                      </video>
+                    )
                   ) : (
-                    <video
-                      controls
-                      autoPlay
-                      // *** 크기 문제 해결: object-fit 속성 추가 ***
+                    <div
                       style={{
                         width: "100%",
                         height: "100%",
-                        objectFit: "cover",
+                        cursor: "pointer",
+                        backgroundImage:
+                          video.type === "youtube"
+                            ? `url(https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg)`
+                            : thumbState && thumbState !== "failed"
+                            ? `url(${thumbState})`
+                            : "",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        fontSize: "14px",
                       }}
-                      preload="auto"
-                      playsInline
+                      onClick={() => handlePlay(video.id)}
                     >
-                      <source src={video.localSrc} type="video/mp4" />
-                      <source src={video.localSrc} type="video/mov" />
-                      비디오를 재생할 수 없습니다.
-                    </video>
-                  )
-                ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      cursor: "pointer",
-                      backgroundImage:
-                        video.type === "youtube"
-                          ? `url(https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg)`
-                          : localThumbnails[video.id]
-                          ? `url(${localThumbnails[video.id]})`
-                          : "",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "white",
-                      fontSize: "14px",
-                    }}
-                    onClick={() => handlePlay(video.id)}
-                  >
-                    {video.type === "local" &&
-                      !localThumbnails[video.id] &&
-                      "썸네일 생성 중..."}
-                    <div
-                      style={{
-                        fontSize: "48px",
-                        display:
-                          video.type === "local" && !localThumbnails[video.id]
-                            ? "none"
-                            : "flex",
-                      }}
-                      onMouseOver={(e) =>
-                        (e.currentTarget.style.transform = "scale(1.1)")
-                      }
-                      onMouseOut={(e) =>
-                        (e.currentTarget.style.transform = "scale(1)")
-                      }
-                    >
-                      ▶️
+                      {isThumbLoading && "썸네일 생성 중..."}
+                      <div
+                        style={{
+                          fontSize: "48px",
+                          backgroundColor: "rgba(0,0,0,0.7)",
+                          borderRadius: "50%",
+                          padding: "20px",
+                          color: "white",
+                          transition: "transform 0.2s",
+                          // 로딩 중일 때는 재생 버튼 숨김
+                          display: isThumbLoading ? "none" : "flex",
+                        }}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.transform = "scale(1.1)")
+                        }
+                        onMouseOut={(e) =>
+                          (e.currentTarget.style.transform = "scale(1)")
+                        }
+                      >
+                        ▶️
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              </div>
+
+              <div className="video-info-footer">
+                <p
+                  style={{
+                    margin: 0,
+                    color: "#555",
+                    fontSize: "14px",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  {video.description}
+                </p>
               </div>
             </div>
-
-            <div className="video-info-footer">
-              <p
-                style={{
-                  margin: 0,
-                  color: "#555",
-                  fontSize: "14px",
-                  lineHeight: "1.5",
-                }}
-              >
-                {video.description}
-              </p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
