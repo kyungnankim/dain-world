@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import dainImage from "../assets/분유다인.png";
 import crawlingDainImage from "../assets/엉금다인.png";
 import bottleImage from "../assets/젖병.png";
@@ -11,105 +12,6 @@ import beefImage from "../assets/소고기.png";
 import riceImage from "../assets/바나나.png";
 import sesameImage from "../assets/오징어.png";
 import riceCakeImage from "../assets/블루베리.png";
-
-// 게임 화면 전체 스타일
-const gameContainerStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100vw",
-  height: "100vh",
-  backgroundColor: "#fff0f5",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 1000,
-  fontFamily: '"Gowun Dodum", sans-serif',
-  overflow: "hidden",
-  padding: "10px",
-  boxSizing: "border-box",
-  cursor: "pointer",
-};
-
-// 다인이 이미지 스타일 (크기가 동적으로 변함)
-const dainStyle = {
-  position: "absolute",
-  userSelect: "none",
-  transition:
-    "top 0.5s ease-in-out, left 0.5s ease-in-out, width 0.3s ease, height 0.3s ease",
-  zIndex: 2,
-};
-
-// 음식 이미지 스타일
-const foodStyle = {
-  position: "absolute",
-  width: "80px",
-  userSelect: "none",
-  transition: "opacity 0.5s",
-  zIndex: 1,
-};
-
-// 점수판 스타일
-const scoreBoardStyle = {
-  position: "absolute",
-  top: "20px",
-  right: "20px",
-  display: "flex",
-  alignItems: "center",
-  backgroundColor: "rgba(255, 255, 255, 0.9)",
-  padding: "15px 25px",
-  borderRadius: "25px",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-  zIndex: 3,
-};
-
-// 단계 표시 스타일
-const stageIndicatorStyle = {
-  position: "absolute",
-  top: "20px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  backgroundColor: "rgba(233, 30, 99, 0.9)",
-  color: "white",
-  padding: "10px 20px",
-  borderRadius: "20px",
-  fontSize: "1.2em",
-  fontWeight: "bold",
-  zIndex: 3,
-};
-
-// 단계 전환 메시지 스타일
-const stageTransitionStyle = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  backgroundColor: "rgba(255, 255, 255, 0.95)",
-  padding: "30px 40px",
-  borderRadius: "20px",
-  textAlign: "center",
-  fontSize: "1.3em",
-  color: "#e91e63",
-  fontWeight: "bold",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-  zIndex: 4,
-  animation: "popIn 0.5s ease-out",
-};
-
-// 설명 텍스트 스타일
-const instructionStyle = {
-  position: "absolute",
-  bottom: "20px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  fontSize: "1.1em",
-  color: "#5d4037",
-  backgroundColor: "rgba(255, 255, 255, 0.8)",
-  padding: "10px 20px",
-  borderRadius: "15px",
-  zIndex: 3,
-  textAlign: "center",
-};
 
 // 각 단계별 설정
 const STAGE_CONFIG = {
@@ -144,21 +46,56 @@ function FeedingGame({ onBack }) {
   const [isMoving, setIsMoving] = useState(false);
   const [showTransition, setShowTransition] = useState(false);
   const [currentFoodIndex, setCurrentFoodIndex] = useState(0);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [screenSize, setScreenSize] = useState({ width: 1024, height: 768 });
 
   // 다인이와 음식의 위치를 state로 관리
   const [dainPosition, setDainPosition] = useState({ top: "50%", left: "50%" });
   const [foodPosition, setFoodPosition] = useState({ top: "70%", left: "50%" });
   const [foodOpacity, setFoodOpacity] = useState(1);
 
-  // 현재 단계 설정
-  const currentStage = STAGE_CONFIG[stage];
+  // 화면 크기 업데이트
+  useEffect(() => {
+    const updateScreenSize = () => {
+      if (typeof window !== 'undefined') {
+        setScreenSize({
+          width: window.innerWidth,
+          height: window.innerHeight
+        });
+      }
+    };
 
-  // 다인이 크기 계산 (먹을때마다 커짐)
+    updateScreenSize();
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, []);
+
+  // 현재 단계 설정
+  const currentStage = STAGE_CONFIG[stage] || STAGE_CONFIG[1];
+
+  // 다인이 크기 계산 (반응형)
   const getDainSize = () => {
-    const baseSize = 120;
-    const growthPerFood = 15;
+    const isMobile = screenSize.width <= 768;
+    const isTablet = screenSize.width > 768 && screenSize.width <= 1024;
+    
+    let baseSize, growthPerFood, maxSize;
+    
+    if (isMobile) {
+      baseSize = 120;
+      growthPerFood = 12;
+      maxSize = 220;
+    } else if (isTablet) {
+      baseSize = 150;
+      growthPerFood = 16;
+      maxSize = 280;
+    } else {
+      baseSize = 180;
+      growthPerFood = 20;
+      maxSize = 350;
+    }
+    
     const currentSize = baseSize + score * growthPerFood;
-    return Math.min(currentSize, 250); // 최대 크기 제한
+    return Math.min(currentSize, maxSize);
   };
 
   // 현재 음식 가져오기
@@ -172,10 +109,26 @@ function FeedingGame({ onBack }) {
 
   // 음식 위치를 랜덤으로 변경하는 함수
   const moveFood = () => {
-    const top = Math.random() * (window.innerHeight - 300) + 100;
-    const left = Math.random() * (window.innerWidth - 200) + 100;
+    const isMobile = screenSize.width <= 768;
+    const padding = isMobile ? 50 : 100;
+    const bottomPadding = isMobile ? 150 : 300;
+    
+    const top = Math.random() * (screenSize.height - bottomPadding) + padding;
+    const left = Math.random() * (screenSize.width - (padding * 2)) + padding;
     setFoodPosition({ top: `${top}px`, left: `${left}px` });
     setFoodOpacity(1);
+  };
+
+  // 게임 재시작 함수
+  const restartGame = () => {
+    setStage(1);
+    setScore(0);
+    setCurrentFoodIndex(0);
+    setDainPosition({ top: "50%", left: "50%" });
+    setGameCompleted(false);
+    setShowTransition(false);
+    setIsMoving(false);
+    moveFood();
   };
 
   // 다음 단계로 전환
@@ -194,14 +147,17 @@ function FeedingGame({ onBack }) {
 
   // 화면 클릭 이벤트 핸들러
   const handleScreenClick = () => {
-    if (isMoving || showTransition) return;
+    if (isMoving || showTransition || gameCompleted) return;
 
     setIsMoving(true);
 
     // 1. 다인이를 음식 위치로 이동
+    const isMobile = screenSize.width <= 768;
+    const offset = isMobile ? 25 : 35;
+    
     setDainPosition({
-      top: `calc(${foodPosition.top} - 35px)`,
-      left: `calc(${foodPosition.left} - 35px)`,
+      top: `calc(${foodPosition.top} - ${offset}px)`,
+      left: `calc(${foodPosition.left} - ${offset}px)`,
     });
 
     // 0.6초 후 (다인이가 음식에 도착한 후)
@@ -223,10 +179,7 @@ function FeedingGame({ onBack }) {
             goToNextStage();
           } else {
             // 게임 완료
-            setShowTransition(true);
-            setTimeout(() => {
-              onBack(); // 메인으로 돌아가기
-            }, 3000);
+            setGameCompleted(true);
           }
         } else {
           // 2. 다인이를 다시 중앙으로 복귀
@@ -241,48 +194,52 @@ function FeedingGame({ onBack }) {
 
   // 컴포넌트가 처음 마운트될 때 음식 위치 설정
   useEffect(() => {
-    moveFood();
-  }, []);
+    if (screenSize.width > 0) {
+      moveFood();
+    }
+  }, [screenSize.width, screenSize.height]);
 
   // 단계가 변경될 때 음식 위치 재설정
   useEffect(() => {
-    if (!showTransition) {
+    if (!showTransition && screenSize.width > 0) {
       moveFood();
     }
   }, [stage]);
+
+  // 컴포넌트 상태 확인
+  if (!currentStage) {
+    return <div className="feeding-game-loading">Loading...</div>;
+  }
 
   const currentFood = getCurrentFood();
   const dainSize = getDainSize();
 
   return (
-    <div style={gameContainerStyle} onClick={handleScreenClick}>
+    <div className="feeding-game-container" onClick={handleScreenClick}>
       {/* 뒤로가기 버튼 */}
       <button
-        className="fortune-btn"
+        className="fortune-btn feeding-game-back-button"
         onClick={(e) => {
           e.stopPropagation();
           onBack();
         }}
-        style={{ position: "absolute", top: "20px", left: "20px", zIndex: 3 }}
       >
         돌아가기
       </button>
 
       {/* 단계 표시 */}
-      <div style={stageIndicatorStyle}>
+      <div className="feeding-game-stage-indicator">
         {currentStage.title} - {score}/{currentStage.maxScore}
       </div>
 
       {/* 점수판 */}
-      <div style={scoreBoardStyle}>
+      <div className="feeding-game-scoreboard">
         <img
           src={formulaImage}
           alt="분유통"
-          style={{ width: "40px", marginRight: "10px" }}
+          className="feeding-game-scoreboard-icon"
         />
-        <span
-          style={{ fontSize: "1.3em", color: "#e91e63", fontWeight: "bold" }}
-        >
+        <span className="feeding-game-scoreboard-text">
           냠냠: {score}번
         </span>
       </div>
@@ -291,8 +248,8 @@ function FeedingGame({ onBack }) {
       <img
         src={currentStage.characterImage}
         alt="다인이"
+        className="feeding-game-dain"
         style={{
-          ...dainStyle,
           ...dainPosition,
           width: `${dainSize}px`,
           height: `${dainSize}px`,
@@ -300,17 +257,21 @@ function FeedingGame({ onBack }) {
       />
 
       {/* 음식 이미지 */}
-      {!showTransition && (
+      {!showTransition && !gameCompleted && (
         <img
           src={currentFood.image}
           alt={currentFood.name}
-          style={{ ...foodStyle, ...foodPosition, opacity: foodOpacity }}
+          className="feeding-game-food"
+          style={{ 
+            ...foodPosition, 
+            opacity: foodOpacity 
+          }}
         />
       )}
 
       {/* 설명 텍스트 */}
-      {!showTransition && (
-        <p style={instructionStyle}>
+      {!showTransition && !gameCompleted && (
+        <p className="feeding-game-instruction">
           {currentStage.instruction}
           <br />
           <small>현재 음식: {currentFood.name}</small>
@@ -319,218 +280,52 @@ function FeedingGame({ onBack }) {
 
       {/* 단계 전환 메시지 */}
       {showTransition && (
-        <div style={stageTransitionStyle}>
-          <div style={{ fontSize: "3em", marginBottom: "15px" }}>
+        <div className="feeding-game-modal">
+          <div className="feeding-game-modal-emoji">
             {stage < 2 ? "🎉" : "🎊"}
           </div>
-          <div style={{ marginBottom: "10px" }}>
+          <div className="feeding-game-modal-title">
             {currentStage.completionMessage}
           </div>
           {stage < 2 && (
-            <div style={{ fontSize: "1em", color: "#666", marginTop: "15px" }}>
+            <div className="feeding-game-modal-subtitle">
               잠시 후 {STAGE_CONFIG[stage + 1].title} 단계로 넘어갑니다...
             </div>
           )}
           {stage >= 2 && (
-            <div style={{ fontSize: "1em", color: "#666", marginTop: "15px" }}>
+            <div className="feeding-game-modal-subtitle">
               게임이 완료되었습니다! 메인으로 돌아갑니다...
             </div>
           )}
         </div>
       )}
 
-      <style jsx>{`
-        @keyframes popIn {
-          0% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.8);
-          }
-          100% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-          }
-        }
-      `}</style>
+      {/* 게임 완료 화면 */}
+      {gameCompleted && (
+        <div className="feeding-game-modal">
+          <div className="feeding-game-modal-emoji">🎊</div>
+          <div className="feeding-game-modal-title">축하합니다!</div>
+          <div className="feeding-game-modal-description">
+            다인이가 모든 음식을 먹고 건강하게 자랐어요!
+          </div>
+          <div className="feeding-game-completed-buttons">
+            <button
+              className="fortune-btn feeding-game-restart-button"
+              onClick={restartGame}
+            >
+              🎮 다시하기
+            </button>
+            <button
+              className="fortune-btn feeding-game-home-button"
+              onClick={onBack}
+            >
+              🏠 메인으로
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default FeedingGame;
-/*import React, { useState, useEffect } from "react";
-import dainImage from "../assets/분유다인.png";
-import bottleImage from "../assets/젖병.png";
-import formulaImage from "../assets/분유통.png";
-
-// 게임 화면 전체 스타일
-const gameContainerStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100vw",
-  height: "100vh",
-  backgroundColor: "#fff0f5",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 1000,
-  fontFamily: '"Gowun Dodum", sans-serif',
-  overflow: "hidden",
-  padding: "10px",
-  boxSizing: "border-box",
-  cursor: "pointer", // 화면 전체에 클릭 커서 표시
-};
-
-// 다인이 이미지 스타일 (position absolute로 변경)
-const dainStyle = {
-  position: "absolute",
-  width: "150px",
-  height: "150px",
-  userSelect: "none",
-  // 부드러운 이동을 위한 transition 효과 추가
-  transition: "top 0.5s ease-in-out, left 0.5s ease-in-out",
-  // 다인이 이미지가 다른 요소 위에 있도록 zIndex 추가
-  zIndex: 2,
-};
-
-// 젖병 이미지 스타일 (커서 제거)
-const bottleStyle = {
-  position: "absolute",
-  width: "80px",
-  userSelect: "none",
-  transition: "opacity 0.5s",
-  zIndex: 1,
-};
-
-// 점수판 스타일
-const scoreBoardStyle = {
-  position: "absolute",
-  top: "20px",
-  right: "20px",
-  display: "flex",
-  alignItems: "center",
-  backgroundColor: "rgba(255, 255, 255, 0.8)",
-  padding: "10px 20px",
-  borderRadius: "20px",
-  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-  zIndex: 3,
-};
-
-const formulaIconStyle = {
-  width: "50px",
-  marginRight: "10px",
-};
-
-const scoreTextStyle = {
-  fontSize: "1.5em",
-  color: "#e91e63",
-  fontWeight: "bold",
-};
-
-// 설명 텍스트 스타일 (화면 맨 아래로 이동)
-const instructionStyle = {
-  position: "absolute",
-  bottom: "20px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  fontSize: "1.1em",
-  color: "#5d4037",
-  backgroundColor: "rgba(255, 255, 255, 0.7)",
-  padding: "8px 15px",
-  borderRadius: "15px",
-  zIndex: 3,
-};
-
-function FeedingGame({ onBack }) {
-  const [score, setScore] = useState(0);
-  const [isMoving, setIsMoving] = useState(false);
-
-  // 다인이와 젖병의 위치를 state로 관리
-  const [dainPosition, setDainPosition] = useState({ top: "50%", left: "50%" });
-  const [bottlePosition, setBottlePosition] = useState({
-    top: "70%",
-    left: "50%",
-  });
-  const [bottleOpacity, setBottleOpacity] = useState(1);
-
-  // 젖병 위치를 랜덤으로 변경하는 함수
-  const moveBottle = () => {
-    // 화면 가장자리를 피해서 위치 선정
-    const top = Math.random() * (window.innerHeight - 250) + 100;
-    const left = Math.random() * (window.innerWidth - 150) + 50;
-    setBottlePosition({ top: `${top}px`, left: `${left}px` });
-    setBottleOpacity(1); // 젖병을 다시 보이게 함
-  };
-
-  // 화면 클릭 이벤트 핸들러
-  const handleScreenClick = () => {
-    if (isMoving) return;
-
-    setIsMoving(true);
-
-    // 1. 다인이를 젖병 위치로 이동
-    // (다인이 이미지의 중심과 젖병 이미지의 중심을 맞추기 위해 좌표 보정)
-    setDainPosition({
-      top: `calc(${bottlePosition.top} - 35px)`,
-      left: `calc(${bottlePosition.left} - 35px)`,
-    });
-
-    // 0.6초 후 (다인이가 젖병에 도착한 후)
-    setTimeout(() => {
-      setScore(score + 1);
-      setBottleOpacity(0); // 젖병을 잠시 숨김
-
-      // 0.4초 더 지난 후 (총 1초 후)
-      setTimeout(() => {
-        // 2. 다인이를 다시 중앙으로 복귀
-        setDainPosition({ top: "50%", left: "50%" });
-        // 3. 젖병을 새로운 위치에 표시
-        moveBottle();
-        setIsMoving(false);
-      }, 400);
-    }, 600);
-  };
-
-  // 컴포넌트가 처음 마운트될 때 젖병 위치 설정
-  useEffect(() => {
-    moveBottle();
-  }, []);
-
-  return (
-    // 이제 화면 전체(div)를 클릭하면 handleScreenClick이 호출됩니다.
-    <div style={gameContainerStyle} onClick={handleScreenClick}>
-      <button
-        className="fortune-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onBack();
-        }}
-        style={{ position: "absolute", top: "20px", left: "20px", zIndex: 3 }}
-      >
-        돌아가기
-      </button>
-
-      <div style={scoreBoardStyle}>
-        <img src={formulaImage} alt="분유통" style={formulaIconStyle} />
-        <span style={scoreTextStyle}>냠냠: {score}번</span>
-      </div>
-
-      <img
-        src={dainImage}
-        alt="분유다인이"
-        style={{ ...dainStyle, ...dainPosition }}
-      />
-
-      <img
-        src={bottleImage}
-        alt="젖병"
-        style={{ ...bottleStyle, ...bottlePosition, opacity: bottleOpacity }}
-      />
-      <p style={instructionStyle}>
-        화면 아무 곳이나 클릭하면 다인이가 젖병으로 달려가요!
-      </p>
-    </div>
-  );
-}
-
-export default FeedingGame;
-*/
