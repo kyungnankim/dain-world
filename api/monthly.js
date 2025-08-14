@@ -1,14 +1,9 @@
-// api/monthly.js - CommonJS 형식으로 복원
-const cloudinary = require("cloudinary").v2;
+// api/monthly.js - 최종 버전
+import { v2 as cloudinary } from "cloudinary";
 
-// Cloudinary 설정
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+export default async function handler(req, res) {
+  console.log("📅 monthly.js 호출됨!");
 
-module.exports = async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -37,6 +32,13 @@ module.exports = async function handler(req, res) {
     }
 
     console.log(`🔍 ${monthNum}월 사진 검색 시작...`);
+
+    // Cloudinary 설정
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
     const result = await cloudinary.search
       .expression(`folder:dain-world/${monthNum}`)
@@ -93,4 +95,4 @@ module.exports = async function handler(req, res) {
       month: req.query.month,
     });
   }
-};
+}

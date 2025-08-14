@@ -1,14 +1,5 @@
-// api/delete.js - CommonJS 형식으로 복원
-const cloudinary = require("cloudinary").v2;
-
-// Cloudinary 설정
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-module.exports = async function handler(req, res) {
+// api/delete.js - ES modules 형식으로 수정
+export default async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -45,6 +36,16 @@ module.exports = async function handler(req, res) {
     }
 
     console.log(`🗑️ ${photoIds.length}장의 사진 삭제 시작:`, photoIds);
+
+    // Cloudinary 동적 import
+    const { v2: cloudinary } = await import("cloudinary");
+
+    // Cloudinary 설정
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
     const deletedIds = [];
     const failedIds = [];
@@ -112,4 +113,4 @@ module.exports = async function handler(req, res) {
         process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
-};
+}

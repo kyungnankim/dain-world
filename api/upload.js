@@ -1,15 +1,8 @@
-// api/upload.js - CommonJS 형식으로 통일
-const cloudinary = require("cloudinary").v2;
-const formidable = require("formidable");
+// api/upload.js - 더 안전한 버전
+import { v2 as cloudinary } from "cloudinary";
+import formidable from "formidable";
 
-// Cloudinary 설정
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   console.log("🚀 upload.js 호출됨!");
   console.log("📝 Method:", req.method);
 
@@ -32,15 +25,14 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // 환경변수 확인
-    console.log("🔍 환경변수 체크:");
-    if (
-      !process.env.CLOUDINARY_CLOUD_NAME ||
-      !process.env.CLOUDINARY_API_KEY ||
-      !process.env.CLOUDINARY_API_SECRET
-    ) {
-      throw new Error("Cloudinary 환경변수가 설정되지 않았습니다.");
-    }
+    console.log("🔧 Cloudinary 설정 중...");
+
+    // Cloudinary 설정
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
     console.log("📦 formidable로 파일 파싱 시작...");
 
@@ -52,8 +44,15 @@ module.exports = async function handler(req, res) {
 
     const { fields, files } = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve({ fields, files });
+        if (err) {
+          console.error("❌ formidable 파싱 에러:", err);
+          reject(err);
+        } else {
+          console.log("✅ formidable 파싱 성공");
+          console.log("📄 fields:", fields);
+          console.log("📁 files:", Object.keys(files));
+          resolve({ fields, files });
+        }
       });
     });
 
@@ -65,20 +64,27 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    console.log(`📅 업로드 월: ${month}`);
+
     const fileArray = Array.isArray(files.file) ? files.file : [files.file];
+    console.log(`📸 업로드할 파일 수: ${fileArray.length}`);
+
     const uploadResults = [];
 
     for (const file of fileArray) {
-      if (!file) continue;
+      if (!file) {
+        console.log("⚠️ 빈 파일 건너뜀");
+        continue;
+      }
 
-      console.log(`📤 업로드 중: ${file.originalFilename}`);
+      console.log(`📤 업로드 중: ${file.originalFilename || "unnamed"}`);
+      console.log(`📍 파일 경로: ${file.filepath}`);
 
       const result = await cloudinary.uploader.upload(file.filepath, {
         folder: `dain-world/${month}`,
-        public_id: `${Date.now()}_${file.originalFilename?.replace(
-          /\.[^/.]+$/,
-          ""
-        )}`,
+        public_id: `${Date.now()}_${
+          file.originalFilename?.replace(/\.[^/.]+$/, "") || "photo"
+        }`,
         overwrite: false,
         resource_type: "auto",
       });
@@ -87,11 +93,13 @@ module.exports = async function handler(req, res) {
         id: result.public_id,
         url: result.secure_url,
         month: parseInt(month),
-        name: file.originalFilename,
+        name: file.originalFilename || "photo",
       });
 
       console.log(`✅ 업로드 성공: ${result.public_id}`);
     }
+
+    console.log(`🎉 업로드 완료: ${uploadResults.length}장`);
 
     res.status(200).json({
       success: true,
@@ -99,10 +107,20 @@ module.exports = async function handler(req, res) {
       photos: uploadResults,
     });
   } catch (error) {
-    console.error("❌ upload.js 오류:", error.message);
+    console.error("❌ upload.js 오류:", error);
+    console.error("❌ 오류 스택:", error.stack);
+
     res.status(500).json({
       success: false,
       error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
+}
+
+// Vercel 설정
+export const config = {
+  api: {
+    bodyParser: false,
+  },
 };
