@@ -226,7 +226,7 @@ const MonthlyPhotos = ({
         </button>
         <div className="monthly-title">
           <span className="month-emoji-large">📅</span>
-          <h1>월별 사진 갤러리</h1>
+          <h1>개월별 사진 갤러리</h1>
         </div>
         {/*<button
           className="fortune-btn"
