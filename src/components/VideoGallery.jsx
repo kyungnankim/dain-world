@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import video48 from "../assets/IMG_2025081321224470.MOV";
-import video49 from "../assets/IMG_2025081321224483.MOV";
+import video48 from "../assets/IMG_2025081321224470.mp4";
+import video49 from "../assets/IMG_2025081321224483.mp4";
 
 // *** 모바일 환경에 맞게 최적화하고, 실패 처리를 추가한 썸네일 생성 함수 ***
 const createThumbnail = (videoSrc) => {
