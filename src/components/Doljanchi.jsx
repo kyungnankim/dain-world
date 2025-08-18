@@ -1,9 +1,7 @@
-// src/components/Doljanchi.jsx
 import React, { useState, useEffect } from "react";
 
 const Doljanchi = ({ partyDate }) => {
   const [dDay, setDDay] = useState("");
-  const [selectedMapType, setSelectedMapType] = useState("google"); // 구글맵을 기본값으로
 
   useEffect(() => {
     const dolPartyDate = new Date(partyDate);
@@ -22,54 +20,47 @@ const Doljanchi = ({ partyDate }) => {
     }
   }, [partyDate]);
 
-  // 실제 호텔 정보
+  // ✅ 실제 호텔 정보 및 정확한 좌표로 수정
   const hotelInfo = {
-    name: "메이필드 호텔 낙원",
-    address: "서울특별시 강서구 외발산동 방화대로 94",
-    // 방화대로 94 좌표 (대략적)
-    lat: 37.5665,
-    lng: 126.8015,
+    name: "메이필드 호텔 서울", // 공식 명칭으로 변경
+    address: "서울특별시 강서구 방화대로 94",
+    lat: 37.5615,
+    lng: 126.8055,
   };
 
   // 카카오맵으로 길찾기 (지도 검색)
   const openKakaoMap = () => {
-    const query = encodeURIComponent(hotelInfo.address);
-    window.open(`https://map.kakao.com/link/search/${query}`, "_blank");
+    window.open(
+      `https://map.kakao.com/link/to/${encodeURIComponent(hotelInfo.name)},${
+        hotelInfo.lat
+      },${hotelInfo.lng}`,
+      "_blank"
+    );
   };
 
-  // 네이버맵으로 길찾기
+  // ✅ 네이버맵으로 길찾기 (주소 검색) - 수정
   const openNaverMap = () => {
     const query = encodeURIComponent(hotelInfo.address);
     window.open(`https://map.naver.com/v5/search/${query}`, "_blank");
   };
 
-  // 구글맵으로 길찾기
+  // ✅ 구글맵으로 길찾기 - 수정
   const openGoogleMap = () => {
     const query = encodeURIComponent(hotelInfo.address);
-    window.open(`https://maps.google.com/maps?q=${query}`, "_blank");
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${query}`,
+      "_blank"
+    );
   };
 
-  // ✅ 카카오네비 수정 - "메이필드 호텔 낙원"이 제대로 찍히도록
+  // 카카오네비 (안정적인 단일 폴백)
   const openKakaoNavi = () => {
-    const isMobile =
-      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      );
-
+    const isMobile = /Android|iPhone/i.test(navigator.userAgent);
     if (isMobile) {
-      // 방법 1: 최신 카카오네비 스키마 (목적지 이름 포함)
-      const kakaoNaviUrl = `kakaonavi://navigate?destination=${hotelInfo.lat},${
-        hotelInfo.lng
-      }&destination_name=${encodeURIComponent(hotelInfo.name)}`;
-      window.location.href = kakaoNaviUrl;
+      // 1. 카카오네비 앱 실행 시도
+      window.location.href = `kakaonavi://route?ep=${hotelInfo.lat},${hotelInfo.lng}&by=CAR`;
 
-      // 방법 2: 1.5초 후 카카오맵 길찾기 스키마 시도
-      setTimeout(() => {
-        const kakaoRouteUrl = `kakaomap://route?sp=&ep=${hotelInfo.lat},${hotelInfo.lng}&by=CAR`;
-        window.location.href = kakaoRouteUrl;
-      }, 1500);
-
-      // 방법 3: 3초 후 웹으로 대체 (목적지 이름 포함)
+      // 2. 2.5초 후 앱이 실행되지 않았다면 카카오맵 길찾기 웹으로 이동
       setTimeout(() => {
         window.open(
           `https://map.kakao.com/link/to/${encodeURIComponent(
@@ -77,95 +68,66 @@ const Doljanchi = ({ partyDate }) => {
           )},${hotelInfo.lat},${hotelInfo.lng}`,
           "_blank"
         );
-      }, 3000);
+      }, 2500);
     } else {
-      // PC: 카카오맵 웹에서 길찾기 (목적지 이름 포함)
-      window.open(
-        `https://map.kakao.com/link/to/${encodeURIComponent(hotelInfo.name)},${
-          hotelInfo.lat
-        },${hotelInfo.lng}`,
-        "_blank"
-      );
+      openKakaoMap(); // PC는 카카오맵 웹으로
     }
   };
 
-  // 구글맵 네비로 목적지 설정 (안정적)
+  // ✅ 구글맵 네비로 목적지 설정 - 수정
   const openGoogleNavi = () => {
-    const naviUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-      hotelInfo.address
-    )}`;
-    window.open(naviUrl, "_blank");
+    const query = encodeURIComponent(hotelInfo.address);
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${query}`,
+      "_blank"
+    );
   };
 
-  // 네이버네비로 목적지 설정 (한국 최적화)
+  // 네이버네비 (안정적인 단일 폴백)
   const openNaverNavi = () => {
-    const naviUrl = `nmap://route/car?dlat=${hotelInfo.lat}&dlng=${
-      hotelInfo.lng
-    }&dname=${encodeURIComponent(hotelInfo.name)}`;
-
-    const isMobile =
-      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      );
-
+    const isMobile = /Android|iPhone/i.test(navigator.userAgent);
     if (isMobile) {
-      // 모바일: 네이버네비 앱 실행 시도
+      // 1. 네이버맵 앱 실행 시도 (길찾기)
+      const naviUrl = `nmap://route/car?dlat=${hotelInfo.lat}&dlng=${
+        hotelInfo.lng
+      }&dname=${encodeURIComponent(hotelInfo.name)}`;
       window.location.href = naviUrl;
 
-      // 앱이 없으면 3초 후 네이버맵 웹으로 이동
+      // 2. 2.5초 후 앱이 실행되지 않았다면 네이버맵 길찾기 웹으로 이동
       setTimeout(() => {
         window.open(
-          `https://map.naver.com/v5/directions/-/-/-/car?c=${hotelInfo.lng},${hotelInfo.lat},15,0,0,0,dh`,
+          `https://map.naver.com/v5/directions/-/-/${encodeURIComponent(
+            hotelInfo.name
+          )}`,
           "_blank"
         );
-      }, 3000);
+      }, 2500);
     } else {
-      // PC: 네이버맵 웹에서 길찾기
-      window.open(
-        `https://map.naver.com/v5/search/${encodeURIComponent(
-          hotelInfo.address
-        )}`,
-        "_blank"
-      );
+      openNaverMap(); // PC는 네이버맵 웹으로
     }
   };
 
-  // ✅ 티맵 수정 - 앱이 제대로 실행되도록
+  // ✅ 티맵 수정 - API 주소 대신 올바른 웹 주소 사용 및 안정적인 폴백
   const openTmap = () => {
-    const isMobile =
-      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      );
-
+    const isMobile = /Android|iPhone/i.test(navigator.userAgent);
     if (isMobile) {
-      // 방법 1: 최신 티맵 스키마 (길찾기)
-      const tmapNaviUrl = `tmap://route?goalname=${encodeURIComponent(
+      // 1. 티맵 앱 실행 시도
+      const tmapUrl = `tmap://route?goalname=${encodeURIComponent(
         hotelInfo.name
       )}&goalx=${hotelInfo.lng}&goaly=${hotelInfo.lat}`;
-      window.location.href = tmapNaviUrl;
+      window.location.href = tmapUrl;
 
-      // 방법 2: 1.5초 후 대안 티맵 스키마 시도
+      // 2. 2.5초 후 앱이 실행되지 않았다면 티맵 길찾기 웹으로 이동
       setTimeout(() => {
-        const tmapSearchUrl = `tmap://search?name=${encodeURIComponent(
-          hotelInfo.address
-        )}`;
-        window.location.href = tmapSearchUrl;
-      }, 1500);
-
-      // 방법 3: 3초 후 티맵 웹 시도
-      setTimeout(() => {
-        const tmapWebUrl = `https://apis.openapi.sk.com/tmap/app/routes?startX=&startY=&endX=${
-          hotelInfo.lng
-        }&endY=${hotelInfo.lat}&endName=${encodeURIComponent(hotelInfo.name)}`;
-        window.location.href = tmapWebUrl;
-      }, 3000);
-
-      // 방법 4: 4.5초 후 구글맵으로 최종 대체
-      setTimeout(() => {
-        openGoogleNavi();
-      }, 4500);
+        window.open(
+          `https://tmap.io/web/route/name/${encodeURIComponent(
+            hotelInfo.name
+          )}/x/${hotelInfo.lng}/y/${hotelInfo.lat}`,
+          "_blank"
+        );
+      }, 2500);
     } else {
-      // PC: 구글맵으로 대체
+      // PC는 구글맵으로 대체
       openGoogleNavi();
     }
   };
@@ -205,7 +167,6 @@ const Doljanchi = ({ partyDate }) => {
             귀한 걸음 하시어 다인이의 첫 생일을 함께 축복해주세요.
           </strong>
         </p>
-
         <div style={{ textAlign: "center" }}>
           <div
             className="d-day"
@@ -241,7 +202,6 @@ const Doljanchi = ({ partyDate }) => {
         >
           📅 일정 안내
         </h3>
-
         <div style={{ display: "grid", gap: "10px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "20px" }}>📆</span>
@@ -250,7 +210,6 @@ const Doljanchi = ({ partyDate }) => {
               2025년 9월 13일 (토요일)
             </span>
           </div>
-
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "20px" }}>🕐</span>
             <strong>시간:</strong>
@@ -258,12 +217,11 @@ const Doljanchi = ({ partyDate }) => {
               오후 2시
             </span>
           </div>
-
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "20px" }}>🏨</span>
             <strong>장소:</strong>
             <span style={{ color: "#d63384", fontWeight: "bold" }}>
-              메이필드 호텔 낙원
+              {hotelInfo.name}
             </span>
           </div>
         </div>
@@ -287,7 +245,6 @@ const Doljanchi = ({ partyDate }) => {
         >
           🗺️ 오시는 길
         </h3>
-        {/* 주소 정보 및 사용 팁 */}
         <div
           style={{
             backgroundColor: "#f8f9fa",
@@ -317,7 +274,7 @@ const Doljanchi = ({ partyDate }) => {
             📍 {hotelInfo.address}
           </p>
         </div>
-        {/* 실제 호텔 위치 지도 */}
+        {/* ✅ 실제 호텔 위치 지도 - 올바른 구글맵 주소로 수정 */}
         <div
           style={{
             width: "100%",
@@ -341,7 +298,7 @@ const Doljanchi = ({ partyDate }) => {
           ></iframe>
         </div>
 
-        {/* 네비게이션 앱 버튼들 - 카카오네비 다시 추가 */}
+        {/* 네비게이션 앱 버튼들 */}
         <div style={{ marginBottom: "15px" }}>
           <h4
             style={{
@@ -351,7 +308,7 @@ const Doljanchi = ({ partyDate }) => {
               fontSize: "16px",
             }}
           >
-            🚗 네비로 주소찍기
+            🚗 네비로 길찾기
           </h4>
           <div
             style={{
@@ -375,18 +332,9 @@ const Doljanchi = ({ partyDate }) => {
                 transition: "all 0.3s ease",
                 boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
               }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = "scale(1.05)";
-                e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = "scale(1)";
-                e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-              }}
             >
               카카오맵
             </button>
-
             <button
               onClick={openGoogleNavi}
               style={{
@@ -401,19 +349,10 @@ const Doljanchi = ({ partyDate }) => {
                 transition: "all 0.3s ease",
                 boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
               }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = "scale(1.05)";
-                e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = "scale(1)";
-                e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-              }}
             >
               구글맵
             </button>
           </div>
-
           <div
             style={{
               display: "grid",
@@ -435,19 +374,9 @@ const Doljanchi = ({ partyDate }) => {
                 transition: "all 0.3s ease",
                 boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
               }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = "scale(1.05)";
-                e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = "scale(1)";
-                e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-              }}
             >
               네이버맵
-              <br />
             </button>
-
             <button
               onClick={openTmap}
               style={{
@@ -461,14 +390,6 @@ const Doljanchi = ({ partyDate }) => {
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = "scale(1.05)";
-                e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = "scale(1)";
-                e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
               }}
             >
               티맵
@@ -506,7 +427,7 @@ const Doljanchi = ({ partyDate }) => {
         </p>
       </div>
 
-      {/* 연락처 (선택사항) */}
+      {/* 연락처 */}
       <div
         style={{
           textAlign: "center",

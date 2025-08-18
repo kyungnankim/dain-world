@@ -689,6 +689,7 @@ const VideoGallery = ({ onBack }) => {
                       }}
                       onClick={() => handlePlay(video.id)}
                     >
+                      {isThumbLoading && "▶️"}
                       <div
                         style={{
                           fontSize: "48px",
