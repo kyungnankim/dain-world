@@ -689,7 +689,6 @@ const VideoGallery = ({ onBack }) => {
                       }}
                       onClick={() => handlePlay(video.id)}
                     >
-                      {isThumbLoading && "썸네일 생성 중..."}
                       <div
                         style={{
                           fontSize: "48px",
