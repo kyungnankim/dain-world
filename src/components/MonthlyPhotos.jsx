@@ -25,18 +25,18 @@ const MonthlyPhotos = ({
 
   // 월별 정보
   const months = [
-    { month: 1, name: "1월", emoji: "❄️", color: "#87CEEB" },
-    { month: 2, name: "2월", emoji: "💕", color: "#FFB6C1" },
-    { month: 3, name: "3월", emoji: "🌸", color: "#98FB98" },
-    { month: 4, name: "4월", emoji: "🌷", color: "#DDA0DD" },
-    { month: 5, name: "5월", emoji: "🌹", color: "#F0E68C" },
-    { month: 6, name: "6월", emoji: "☀️", color: "#FFE4B5" },
-    { month: 7, name: "7월", emoji: "🏖️", color: "#40E0D0" },
-    { month: 8, name: "8월", emoji: "🌻", color: "#FFD700" },
-    { month: 9, name: "9월", emoji: "🍂", color: "#DEB887" },
-    { month: 10, name: "10월", emoji: "🎃", color: "#FF6347" },
-    { month: 11, name: "11월", emoji: "🍁", color: "#CD853F" },
-    { month: 12, name: "12월", emoji: "🎄", color: "#90EE90" },
+    { month: 1, name: "1개월", emoji: "❄️", color: "#87CEEB" },
+    { month: 2, name: "2개월", emoji: "💕", color: "#FFB6C1" },
+    { month: 3, name: "3개월", emoji: "🌸", color: "#98FB98" },
+    { month: 4, name: "4개월", emoji: "🌷", color: "#DDA0DD" },
+    { month: 5, name: "5개월", emoji: "🌹", color: "#F0E68C" },
+    { month: 6, name: "6개월", emoji: "☀️", color: "#FFE4B5" },
+    { month: 7, name: "7개월", emoji: "🏖️", color: "#40E0D0" },
+    { month: 8, name: "8개월", emoji: "🌻", color: "#FFD700" },
+    { month: 9, name: "9개월", emoji: "🍂", color: "#DEB887" },
+    { month: 10, name: "10개월", emoji: "🎃", color: "#FF6347" },
+    { month: 11, name: "11개월", emoji: "🍁", color: "#CD853F" },
+    { month: 12, name: "12개월", emoji: "🎄", color: "#90EE90" },
   ];
 
   // 월별 사진들을 가져오는 함수 (캐시 활용)
