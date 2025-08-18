@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 
 const CORRECT_PASSWORD = "0923"; // 삭제 비밀번호
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const MAX_PHOTOS_PER_MONTH = 3; // ✅ 월별 최대 사진 개수 제한
+// ✅ 제한 완전 제거 또는 큰 값으로 설정
+const MAX_PHOTOS_PER_MONTH = 999; // 사실상 무제한 (또는 Number.MAX_SAFE_INTEGER)
 
 function PhotoUpload({
   month,
@@ -21,13 +22,10 @@ function PhotoUpload({
   const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(0);
   const fileInputRef = useRef(null);
 
-  // ✅ 업로드 가능 여부 계산
-  const canUpload = existingPhotos.length < MAX_PHOTOS_PER_MONTH;
-  const remainingSlots = Math.max(
-    0,
-    MAX_PHOTOS_PER_MONTH - existingPhotos.length
-  );
-  const needsDelete = existingPhotos.length >= MAX_PHOTOS_PER_MONTH;
+  // ✅ 제한 로직 비활성화
+  const canUpload = true; // 항상 업로드 가능
+  const remainingSlots = 999; // 사실상 무제한
+  const needsDelete = false; // 삭제 강제하지 않음
 
   const generateCloudinaryUrl = (publicId, transformation = "") => {
     const baseUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload`;
@@ -37,24 +35,15 @@ function PhotoUpload({
   };
 
   const handleFileSelect = (e) => {
-    // ✅ 업로드 제한 체크
-    if (needsDelete) {
-      alert(
-        `❌ ${monthName}에는 최대 ${MAX_PHOTOS_PER_MONTH}장까지만 저장할 수 있습니다.\n먼저 기존 사진을 삭제해주세요.`
-      );
-      return;
-    }
-
+    // ✅ 업로드 제한 체크 제거
     const files = Array.from(e.target.files).filter((f) =>
       f.type.startsWith("image/")
     );
 
-    // ✅ 선택한 파일 개수도 체크
-    const totalAfterUpload = existingPhotos.length + files.length;
-    if (totalAfterUpload > MAX_PHOTOS_PER_MONTH) {
-      alert(
-        `❌ ${MAX_PHOTOS_PER_MONTH}장 제한을 초과합니다.\n현재: ${existingPhotos.length}장, 선택: ${files.length}장\n최대 ${remainingSlots}장까지 선택할 수 있습니다.`
-      );
+    // ✅ 파일 개수 제한도 제거 (원하면 합리적인 제한은 둘 수 있음)
+    // 예: 한 번에 너무 많은 파일 선택 방지용으로 20장 정도 제한
+    if (files.length > 20) {
+      alert("한 번에 최대 20장까지 선택할 수 있습니다.");
       return;
     }
 
@@ -86,14 +75,7 @@ function PhotoUpload({
   const handleUpload = async () => {
     if (previewImages.length === 0) return;
 
-    // ✅ 업로드 직전 재체크
-    if (needsDelete) {
-      alert(
-        `❌ ${monthName}에는 최대 ${MAX_PHOTOS_PER_MONTH}장까지만 저장할 수 있습니다.\n먼저 기존 사진을 삭제해주세요.`
-      );
-      return;
-    }
-
+    // ✅ 업로드 제한 체크 제거
     setUploading(true);
 
     const failedUploads = [];
@@ -223,72 +205,31 @@ function PhotoUpload({
         <h1>📷 {monthName} 사진 관리</h1>
       </div>
 
-      {/* ✅ 사진 제한 안내 카드 */}
+      {/* ✅ 제한 안내 카드 - 단순한 현황 표시로 변경 */}
       <div
         className="card"
         style={{
           marginBottom: "20px",
-          backgroundColor: needsDelete ? "#ffebee" : "#e8f5e8",
-          border: needsDelete ? "2px solid #ff5252" : "2px solid #4caf50",
+          backgroundColor: "#e8f5e8",
+          border: "2px solid #4caf50",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "24px" }}>{needsDelete ? "⚠️" : "📊"}</span>
+          <span style={{ fontSize: "24px" }}>📊</span>
           <div>
-            <h4
-              style={{
-                margin: "0",
-                color: needsDelete ? "#d32f2f" : "#2e7d32",
-              }}
-            >
-              {monthName} 사진 현황: {existingPhotos.length}/
-              {MAX_PHOTOS_PER_MONTH}장
+            <h4 style={{ margin: "0", color: "#2e7d32" }}>
+              {monthName} 사진 현황: {existingPhotos.length}장
             </h4>
             <p style={{ margin: "5px 0 0 0", fontSize: "14px" }}>
-              {needsDelete
-                ? `사진은 월마다 최대 3장 업로드 가능합니다. 새로 업로드하려면 먼저 ${
-                    photosToDelete.size > 0 ? photosToDelete.size : 1
-                  }장 삭제해주세요.`
-                : `${remainingSlots}장 더 업로드할 수 있습니다.`}
+              원하는 만큼 사진을 업로드할 수 있습니다! 🎉
             </p>
           </div>
         </div>
       </div>
 
-      <div
-        className="card"
-        style={{
-          marginBottom: "30px",
-          opacity: needsDelete ? 0.6 : 1,
-          pointerEvents: needsDelete ? "none" : "auto",
-        }}
-      >
-        <h3>
-          새로운 사진 추가하기
-          {needsDelete && <span style={{ color: "#d32f2f" }}> (제한됨)</span>}
-        </h3>
-
-        {needsDelete && (
-          <div
-            style={{
-              backgroundColor: "#ffebee",
-              padding: "15px",
-              borderRadius: "8px",
-              marginBottom: "15px",
-              border: "1px solid #ffcdd2",
-            }}
-          >
-            <h4 style={{ margin: "0 0 10px 0", color: "#d32f2f" }}>
-              🚫 업로드 제한
-            </h4>
-            <p style={{ margin: "0", fontSize: "14px" }}>
-              {monthName}에는 최대 <strong>{MAX_PHOTOS_PER_MONTH}장</strong>
-              까지만 저장할 수 있습니다.
-              <br />새 사진을 추가하려면{" "}
-              <strong>아래에서 기존 사진을 먼저 삭제</strong>해주세요.
-            </p>
-          </div>
-        )}
+      {/* ✅ 제한 관련 스타일 및 비활성화 로직 모두 제거 */}
+      <div className="card" style={{ marginBottom: "30px" }}>
+        <h3>새로운 사진 추가하기</h3>
 
         <div className="file-selector">
           <input
@@ -299,18 +240,9 @@ function PhotoUpload({
             onChange={handleFileSelect}
             style={{ display: "none" }}
             id="photo-input"
-            disabled={needsDelete}
           />
-          <label
-            htmlFor="photo-input"
-            className={`file-input-label ${needsDelete ? "disabled" : ""}`}
-            style={{
-              backgroundColor: needsDelete ? "#ccc" : "",
-              cursor: needsDelete ? "not-allowed" : "pointer",
-            }}
-          >
-            📁 컴퓨터에서 사진 선택{" "}
-            {remainingSlots > 0 && `(최대 ${remainingSlots}장)`}
+          <label htmlFor="photo-input" className="file-input-label">
+            📁 컴퓨터에서 사진 선택 (무제한!)
           </label>
         </div>
 
@@ -337,7 +269,7 @@ function PhotoUpload({
             <button
               className="upload-btn-main"
               onClick={handleUpload}
-              disabled={uploading || needsDelete}
+              disabled={uploading}
             >
               {uploading
                 ? "업로드 중..."
@@ -348,20 +280,11 @@ function PhotoUpload({
       </div>
 
       <div className="card">
-        <h3>
-          기존 사진 관리 ({existingPhotos.length}장)
-          {needsDelete && (
-            <span style={{ color: "#d32f2f" }}> - 삭제 필요</span>
-          )}
-        </h3>
+        <h3>기존 사진 관리 ({existingPhotos.length}장)</h3>
 
         {existingPhotos.length > 0 ? (
           <>
-            <p>
-              {needsDelete
-                ? `⚠️ 새 사진을 업로드하려면 먼저사진을 삭제하세요. 사진은 최대 3장 보기 가능합니다.`
-                : "삭제할 사진을 선택하세요."}
-            </p>
+            <p>삭제할 사진을 선택하세요.</p>
             <div className="preview-grid deletion-mode">
               {existingPhotos.map((photo) => (
                 <div
@@ -381,13 +304,8 @@ function PhotoUpload({
                 className="fortune-btn delete-btn"
                 onClick={handleDeleteRequest}
                 disabled={photosToDelete.size === 0}
-                style={{
-                  backgroundColor:
-                    needsDelete && photosToDelete.size > 0 ? "#ff5252" : "",
-                }}
               >
                 선택한 사진 삭제 ({photosToDelete.size}장)
-                {needsDelete && photosToDelete.size > 0 && " 🔥"}
               </button>
             </div>
           </>

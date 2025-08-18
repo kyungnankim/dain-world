@@ -1,67 +1,6 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import video48 from "../assets/IMG_2025081321224470.mp4";
-import video49 from "../assets/IMG_2025081321224483.mp4";
+import React, { useEffect, useRef, useState } from "react";
 
-// *** 모바일 환경에 맞게 최적화하고, 실패 처리를 추가한 썸네일 생성 함수 ***
-const createThumbnail = (videoSrc) => {
-  return new Promise((resolve, reject) => {
-    const videoElement = document.createElement("video");
-
-    videoElement.playsInline = true;
-    videoElement.muted = true;
-    videoElement.preload = "auto"; // 'metadata'보다 더 확실하게 preload
-    videoElement.crossOrigin = "anonymous";
-    videoElement.src = videoSrc;
-
-    let seeked = false;
-
-    const cleanUp = () => {
-      videoElement.remove();
-    };
-
-    videoElement.onloadedmetadata = () => {
-      try {
-        if (videoElement.duration < 0.2) {
-          videoElement.currentTime = 0;
-        } else {
-          videoElement.currentTime = 0.1;
-        }
-      } catch (e) {
-        reject("Failed to set currentTime");
-        cleanUp();
-      }
-    };
-
-    videoElement.onseeked = () => {
-      if (seeked) return;
-      seeked = true;
-      const canvas = document.createElement("canvas");
-      canvas.width = videoElement.videoWidth || 640;
-      canvas.height = videoElement.videoHeight || 360;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-      const dataURL = canvas.toDataURL("image/jpeg");
-      resolve(dataURL);
-      cleanUp();
-    };
-
-    videoElement.onerror = (err) => {
-      reject("Video load error");
-      cleanUp();
-    };
-
-    // Safari 등 일부 브라우저에서 onseeked가 안 올 경우 타임아웃 설정 (최대 5초)
-    setTimeout(() => {
-      if (!seeked) {
-        reject("Thumbnail generation timeout");
-        cleanUp();
-      }
-    }, 5000);
-
-    videoElement.load(); // 일부 브라우저에서 필요
-  });
-};
-
+// *** YouTube 플레이어 컴포넌트 ***
 const YouTubePlayer = ({ videoId, onReady, onError }) => {
   const playerInstanceRef = useRef(null);
   const [playerId] = useState(
@@ -105,10 +44,9 @@ const YouTubePlayer = ({ videoId, onReady, onError }) => {
   );
 };
 
+// *** 비디오 갤러리 컴포넌트 ***
 const VideoGallery = ({ onBack }) => {
   const [playingVideoId, setPlayingVideoId] = useState(null);
-  const [localThumbnails, setLocalThumbnails] = useState({});
-  const observer = useRef(null);
 
   const allVideos = [
     {
@@ -491,23 +429,24 @@ const VideoGallery = ({ onBack }) => {
     },
     {
       id: 48,
-      type: "local",
-      title: "다인이 영상 48",
-      localSrc: video48,
+      type: "vimeo",
+      title: "다인이 영상 48 (Vimeo)",
+      vimeoId: "1110952250", // Vimeo 비디오 ID
       date: "2025-08-13",
-      description: "다인이의 순간을 담은 로컬 영상입니다.",
+      description: "다인이의 순간을 담은 Vimeo 영상입니다.",
     },
     {
       id: 49,
-      type: "local",
-      title: "다인이 영상 49",
-      localSrc: video49,
+      type: "vimeo",
+      title: "다인이 영상 49 (Vimeo)",
+      vimeoId: "1110952122", // Vimeo 비디오 ID
       date: "2025-08-13",
-      description: "다인이의 순간을 담은 로컬 영상입니다.",
+      description: "다인이의 순간을 담은 Vimeo 영상입니다.",
     },
-  ]; //.sort((a, b) => new Date(b.date) - new Date(a.date));
+  ];
 
   useEffect(() => {
+    // YouTube API 스크립트가 없으면 로드
     if (!document.getElementById("youtube-api")) {
       const script = document.createElement("script");
       script.id = "youtube-api";
@@ -515,47 +454,6 @@ const VideoGallery = ({ onBack }) => {
       script.async = true;
       document.head.appendChild(script);
       window.onYouTubeIframeAPIReady = () => console.log("YouTube API loaded");
-    }
-
-    const handleIntersect = (entries, obs) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const { videoId, videoSrc } = entry.target.dataset;
-          obs.unobserve(entry.target);
-          const numericId = parseInt(videoId, 10);
-
-          // 특정 ID(48, 49)는 썸네일 생성을 건너뜁니다
-          if (videoSrc && numericId !== 48 && numericId !== 49) {
-            createThumbnail(videoSrc)
-              .then((thumb) => {
-                setLocalThumbnails((prev) => ({
-                  ...prev,
-                  [numericId]: thumb,
-                }));
-              })
-              .catch((err) => {
-                console.error("Thumbnail creation failed for:", videoId, err);
-                setLocalThumbnails((prev) => ({
-                  ...prev,
-                  [numericId]: "failed",
-                }));
-              });
-          }
-        }
-      });
-    };
-
-    const currentObserver = new IntersectionObserver(handleIntersect, {
-      rootMargin: "200px",
-    });
-    observer.current = currentObserver;
-
-    return () => currentObserver.disconnect();
-  }, []);
-
-  const localVideoCardRef = useCallback((node) => {
-    if (node && observer.current) {
-      observer.current.observe(node);
     }
   }, []);
 
@@ -584,152 +482,129 @@ const VideoGallery = ({ onBack }) => {
           gap: "20px",
         }}
       >
-        {allVideos.map((video) => {
-          const thumbState = localThumbnails[video.id];
-          const isThumbLoading = video.type === "local" && !thumbState;
+        {allVideos.map((video) => (
+          <div
+            key={video.id}
+            className="video-card"
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "20px",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+              border: "1px solid #e1e5e9",
+            }}
+          >
+            <div className="video-info-header" style={{ marginBottom: "15px" }}>
+              <h3
+                style={{
+                  margin: "0 0 8px 0",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  color: "#333",
+                }}
+              >
+                {video.title}
+              </h3>
+              <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+                {video.date}
+              </p>
+            </div>
 
-          return (
             <div
-              key={video.id}
-              ref={video.type === "local" ? localVideoCardRef : null}
-              data-video-id={video.id}
-              data-video-src={video.localSrc || ""}
-              className="video-card"
+              className="responsive-video-wrapper"
               style={{
-                backgroundColor: "white",
-                borderRadius: "12px",
-                padding: "20px",
-                boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                border: "1px solid #e1e5e9",
+                marginBottom: "15px",
+                position: "relative",
+                width: "100%",
+                paddingTop: "56.25%",
+                backgroundColor: "#000",
+                borderRadius: "8px",
+                overflow: "hidden",
               }}
             >
               <div
-                className="video-info-header"
-                style={{ marginBottom: "15px" }}
-              >
-                <h3
-                  style={{
-                    margin: "0 0 8px 0",
-                    fontSize: "18px",
-                    fontWeight: "bold",
-                    color: "#333",
-                  }}
-                >
-                  {video.title}
-                </h3>
-                <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
-                  {video.date}
-                </p>
-              </div>
-
-              <div
-                className="responsive-video-wrapper"
                 style={{
-                  marginBottom: "15px",
-                  position: "relative",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
                   width: "100%",
-                  paddingTop: "56.25%",
-                  backgroundColor: "#000",
-                  borderRadius: "8px",
-                  overflow: "hidden",
+                  height: "100%",
                 }}
               >
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                  }}
-                >
-                  {playingVideoId === video.id ? (
-                    video.type === "youtube" ? (
-                      <YouTubePlayer
-                        videoId={video.videoId}
-                        onReady={(e) => e.target.playVideo()}
-                        onError={() => setPlayingVideoId(null)}
-                      />
-                    ) : (
-                      <video
-                        controls
-                        autoPlay
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                        preload="auto"
-                        playsInline
-                      >
-                        <source src={video.localSrc} type="video/mp4" />
-                        <source src={video.localSrc} type="video/mov" />
-                        비디오를 재생할 수 없습니다.
-                      </video>
-                    )
+                {playingVideoId === video.id ? (
+                  video.type === "youtube" ? (
+                    <YouTubePlayer
+                      videoId={video.videoId}
+                      onReady={(e) => e.target.playVideo()}
+                      onError={() => setPlayingVideoId(null)}
+                    />
                   ) : (
+                    // Vimeo 플레이어
+                    <iframe
+                      src={`https://player.vimeo.com/video/${video.vimeoId}?autoplay=1&title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&app_id=58479`}
+                      style={{ width: "100%", height: "100%" }}
+                      frameBorder="0"
+                      allow="autoplay; fullscreen; picture-in-picture; clipboard-write"
+                      allowFullScreen
+                      title={video.title}
+                    ></iframe>
+                  )
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      cursor: "pointer",
+                      backgroundImage:
+                        video.type === "youtube"
+                          ? `url(https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg)`
+                          : "",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    onClick={() => handlePlay(video.id)}
+                  >
                     <div
                       style={{
-                        width: "100%",
-                        height: "100%",
-                        cursor: "pointer",
-                        backgroundImage:
-                          video.type === "youtube"
-                            ? `url(https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg)`
-                            : thumbState && thumbState !== "failed"
-                            ? `url(${thumbState})`
-                            : "",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        fontSize: "48px",
+                        backgroundColor: "rgba(0,0,0,0.7)",
+                        borderRadius: "50%",
+                        padding: "20px",
                         color: "white",
-                        fontSize: "14px",
+                        transition: "transform 0.2s",
+                        display: "flex",
                       }}
-                      onClick={() => handlePlay(video.id)}
+                      onMouseOver={(e) =>
+                        (e.currentTarget.style.transform = "scale(1.1)")
+                      }
+                      onMouseOut={(e) =>
+                        (e.currentTarget.style.transform = "scale(1)")
+                      }
                     >
-                      {isThumbLoading && "▶️"}
-                      <div
-                        style={{
-                          fontSize: "48px",
-                          backgroundColor: "rgba(0,0,0,0.7)",
-                          borderRadius: "50%",
-                          padding: "20px",
-                          color: "white",
-                          transition: "transform 0.2s",
-                          // 로딩 중일 때는 재생 버튼 숨김
-                          display: isThumbLoading ? "none" : "flex",
-                        }}
-                        onMouseOver={(e) =>
-                          (e.currentTarget.style.transform = "scale(1.1)")
-                        }
-                        onMouseOut={(e) =>
-                          (e.currentTarget.style.transform = "scale(1)")
-                        }
-                      >
-                        ▶️
-                      </div>
+                      ▶️
                     </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="video-info-footer">
-                <p
-                  style={{
-                    margin: 0,
-                    color: "#555",
-                    fontSize: "14px",
-                    lineHeight: "1.5",
-                  }}
-                >
-                  {video.description}
-                </p>
+                  </div>
+                )}
               </div>
             </div>
-          );
-        })}
+
+            <div className="video-info-footer">
+              <p
+                style={{
+                  margin: 0,
+                  color: "#555",
+                  fontSize: "14px",
+                  lineHeight: "1.5",
+                }}
+              >
+                {video.description}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
