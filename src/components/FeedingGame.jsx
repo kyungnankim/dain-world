@@ -1,3 +1,4 @@
+// src/components/FeedingGame.jsx
 import React, { useState, useEffect } from "react";
 
 import dainImage from "../assets/분유다인.png";
@@ -200,16 +201,7 @@ function FeedingGame({ onBack }) {
 
   return (
     <div className="feeding-game-container" onClick={handleScreenClick}>
-      <button
-        className="fortune-btn feeding-game-back-button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onBack();
-        }}
-      >
-        돌아가기
-      </button>
-
+      {/* 돌아가기 버튼 제거됨 */}
       <div className="feeding-game-stage-indicator">
         {currentStage.title} - {score}/{currentStage.maxScore}
       </div>

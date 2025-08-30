@@ -1,3 +1,4 @@
+// src/components/VideoGallery.jsx
 import React, { useEffect, useRef, useState } from "react";
 
 // *** YouTube 플레이어 컴포넌트 ***
@@ -49,6 +50,7 @@ const VideoGallery = ({ onBack }) => {
   const [playingVideoId, setPlayingVideoId] = useState(null);
 
   const allVideos = [
+    // ... (비디오 목록은 기존과 동일)
     {
       id: 1,
       type: "youtube",
@@ -464,11 +466,7 @@ const VideoGallery = ({ onBack }) => {
   return (
     <div className="video-gallery-container">
       <div className="video-header">
-        <button className="fortune-btn" onClick={onBack}>
-          ← 돌아가기
-        </button>
         <h1 className="video-title">🎬 다인이 동영상 갤러리</h1>
-        <div className="video-header-spacer" />
       </div>
 
       <div className="video-content-grid">

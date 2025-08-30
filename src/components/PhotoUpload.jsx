@@ -1,9 +1,9 @@
+// src/components/PhotoUpload.jsx
 import React, { useState, useRef, useEffect } from "react";
 
 const CORRECT_PASSWORD = "0923"; // 삭제 비밀번호
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-// ✅ 제한 완전 제거 또는 큰 값으로 설정
-const MAX_PHOTOS_PER_MONTH = 999; // 사실상 무제한 (또는 Number.MAX_SAFE_INTEGER)
+const MAX_PHOTOS_PER_MONTH = 999;
 
 function PhotoUpload({
   month,
@@ -22,10 +22,9 @@ function PhotoUpload({
   const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(0);
   const fileInputRef = useRef(null);
 
-  // ✅ 제한 로직 비활성화
-  const canUpload = true; // 항상 업로드 가능
-  const remainingSlots = 999; // 사실상 무제한
-  const needsDelete = false; // 삭제 강제하지 않음
+  const canUpload = true;
+  const remainingSlots = 999;
+  const needsDelete = false;
 
   const generateCloudinaryUrl = (publicId, transformation = "") => {
     const baseUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload`;
@@ -35,13 +34,10 @@ function PhotoUpload({
   };
 
   const handleFileSelect = (e) => {
-    // ✅ 업로드 제한 체크 제거
     const files = Array.from(e.target.files).filter((f) =>
       f.type.startsWith("image/")
     );
 
-    // ✅ 파일 개수 제한도 제거 (원하면 합리적인 제한은 둘 수 있음)
-    // 예: 한 번에 너무 많은 파일 선택 방지용으로 20장 정도 제한
     if (files.length > 20) {
       alert("한 번에 최대 20장까지 선택할 수 있습니다.");
       return;
@@ -56,7 +52,6 @@ function PhotoUpload({
     setPreviewImages((prev) => [...prev, ...newPreviews]);
   };
 
-  // 업로드 성공 처리
   const handleUploadSuccess = (uploadedPhotos) => {
     setUploadSuccess(true);
     setAutoRedirectCountdown(3);
@@ -74,10 +69,7 @@ function PhotoUpload({
 
   const handleUpload = async () => {
     if (previewImages.length === 0) return;
-
-    // ✅ 업로드 제한 체크 제거
     setUploading(true);
-
     const failedUploads = [];
 
     try {
@@ -86,20 +78,14 @@ function PhotoUpload({
           const formData = new FormData();
           formData.append("month", month);
           formData.append("file", item.file, item.name);
-
-          console.log(`🚀 API로 '${item.name}' 파일 전송 시작...`);
-
           const response = await fetch("/api/upload", {
             method: "POST",
             body: formData,
           });
-
           const result = await response.json();
-
           if (!response.ok || !result.success) {
             throw new Error(result.error || `'${item.name}' 업로드 실패`);
           }
-
           return result.photos[0];
         } catch (uploadError) {
           console.error(`💥 '${item.name}' 업로드 중 오류:`, uploadError);
@@ -138,7 +124,6 @@ function PhotoUpload({
         const failedFileNames = failedUploads.map((f) => f.name).join(", ");
         alert(`${failedUploads.length}개 파일 업로드 실패: ${failedFileNames}`);
       }
-
       setPreviewImages([]);
     } catch (error) {
       console.error("💥 전체 업로드 과정 오류:", error);
@@ -199,16 +184,12 @@ function PhotoUpload({
   return (
     <div className="photo-upload-container">
       <div className="upload-header">
-        <button className="fortune-btn" onClick={onBack}>
-          ← 돌아가기
-        </button>
+        {/* 돌아가기 버튼은 상단 네비게이션으로 통합되었으므로 제거 */}
         <h1>📷 {monthName} 사진 관리</h1>
       </div>
 
-      {/* ✅ 제한 관련 스타일 및 비활성화 로직 모두 제거 */}
       <div className="card" style={{ marginBottom: "30px" }}>
         <h3>새로운 사진 추가하기</h3>
-
         <div className="file-selector">
           <input
             ref={fileInputRef}
@@ -223,7 +204,6 @@ function PhotoUpload({
             사진 선택
           </label>
         </div>
-
         {previewImages.length > 0 && (
           <div className="preview-section">
             <h4>업로드할 사진 ({previewImages.length}장)</h4>
@@ -257,7 +237,6 @@ function PhotoUpload({
 
       <div className="card">
         <h3>기존 사진 관리 ({existingPhotos.length}장)</h3>
-
         {existingPhotos.length > 0 ? (
           <>
             <p>삭제할 사진을 선택하세요.</p>

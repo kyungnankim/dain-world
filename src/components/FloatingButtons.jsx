@@ -1,4 +1,4 @@
-// src/components/FloatingButtons.jsx - 스크롤 버튼만
+// src/components/FloatingButtons.jsx
 import React, { useState, useEffect } from "react";
 
 const FloatingButtons = ({ activeView }) => {
@@ -20,7 +20,8 @@ const FloatingButtons = ({ activeView }) => {
     if (!scrollTarget) return;
 
     const handleScroll = (event) => {
-      const scrollTop = event.target.scrollTop || window.pageYOffset;
+      // window와 element의 scrollTop 접근 방식이 다르므로 통일
+      const scrollTop = scrollTarget.scrollTop ?? window.pageYOffset;
       setShowScrollTop(scrollTop > 200);
     };
 
@@ -57,7 +58,20 @@ const FloatingButtons = ({ activeView }) => {
         onClick={handleScrollToTop}
         title="맨 위로"
       >
-        ⬆️
+        {/* 예쁜 상향 화살표 SVG 아이콘 */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ width: "20px", height: "20px" }}
+        >
+          <path d="M12 19V6" />
+          <path d="M5 12l7-7 7 7" />
+        </svg>
       </button>
     </div>
   );

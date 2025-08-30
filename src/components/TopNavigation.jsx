@@ -10,6 +10,17 @@ const TopNavigation = ({
 }) => {
   return (
     <div className="top-navigation">
+      {/* activeView에 따라 '뒤로가기' 버튼 또는 '돌잔치' 로고를 표시 */}
+      {activeView !== "main" ? (
+        <div className="top-nav-item" onClick={onGoToMain}>
+          <div className="top-nav-text">뒤로가기</div>
+        </div>
+      ) : (
+        <div className="top-nav-item logo-item">
+          <div className="top-nav-text">돌잔치이</div>
+        </div>
+      )}
+
       <div
         className={`top-nav-item ${activeView === "main" ? "active" : ""}`}
         onClick={onGoToMain}

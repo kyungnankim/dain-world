@@ -1,12 +1,13 @@
-// PhotoGallery.jsx - 삭제 기능 추가 버전
+// PhotoGallery.jsx - Swiper 모달과 함께 개선된 버전
 import React, { useState, useCallback, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
+import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 function PhotoGallery({ photos = [], onDeletePhotos }) {
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
   const [imageErrors, setImageErrors] = useState(new Set());
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedForDeletion, setSelectedForDeletion] = useState(new Set());
@@ -20,15 +21,15 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
   }, [photos]);
 
   const openModal = useCallback(
-    (photo) => {
+    (photo, index) => {
       if (deleteMode) return; // 삭제 모드에서는 모달 열지 않음
-      setSelectedImage(photo);
+      setSelectedImageIndex(index);
     },
     [deleteMode]
   );
 
   const closeModal = useCallback(() => {
-    setSelectedImage(null);
+    setSelectedImageIndex(null);
   }, []);
 
   const toggleDeleteMode = () => {
@@ -75,11 +76,11 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
   );
 
   useEffect(() => {
-    if (selectedImage) {
+    if (selectedImageIndex !== null) {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [selectedImage, handleKeyDown]);
+  }, [selectedImageIndex, handleKeyDown]);
 
   const handleImageError = useCallback((photoId, imageUrl) => {
     console.error("이미지 로드 실패:", imageUrl);
@@ -199,7 +200,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
                   onClick={() =>
                     deleteMode
                       ? togglePhotoSelection(photo.id)
-                      : !hasError && openModal(photo)
+                      : !hasError && openModal(photo, index)
                   }
                   style={{
                     cursor: hasError ? "default" : "pointer",
@@ -283,10 +284,10 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
         </Swiper>
       </div>
 
-      {/* 모달 */}
-      {selectedImage && (
+      {/* Swiper 모달 */}
+      {selectedImageIndex !== null && (
         <div
-          className="modal-overlay"
+          className="photo-modal-overlay"
           onClick={closeModal}
           style={{
             position: "fixed",
@@ -294,54 +295,172 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
             left: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            backgroundColor: "rgba(0, 0, 0, 0.95)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 1000,
+            zIndex: 10000,
             padding: "20px",
             boxSizing: "border-box",
           }}
         >
           <div
-            className="modal-content"
+            className="photo-modal-content"
             onClick={(e) => e.stopPropagation()}
             style={{
               position: "relative",
-              maxWidth: "90vw",
-              maxHeight: "90vh",
+              width: "100%",
+              height: "100%",
+              maxWidth: "95vw",
+              maxHeight: "95vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
-            <img
-              src={selectedImage.fullUrl || selectedImage.url}
-              alt={selectedImage.alt || selectedImage.name}
-              style={{
-                width: "100%",
-                height: "auto",
-                maxWidth: "600px",
-                maxHeight: "80vh",
-                objectFit: "contain",
-                borderRadius: "10px",
-              }}
-            />
+            {/* 닫기 버튼 */}
             <button
               onClick={closeModal}
+              className="photo-modal-close"
               style={{
                 position: "absolute",
-                top: "-40px",
-                right: "0",
-                background: "rgba(255, 255, 255, 0.8)",
+                top: "20px",
+                right: "20px",
+                background: "rgba(255, 255, 255, 0.9)",
                 border: "none",
                 borderRadius: "50%",
-                width: "30px",
-                height: "30px",
+                width: "40px",
+                height: "40px",
                 cursor: "pointer",
-                fontSize: "22px",
+                fontSize: "24px",
                 color: "#333",
+                zIndex: 10001,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "bold",
               }}
             >
               ×
             </button>
+
+            {/* Swiper for modal */}
+            <Swiper
+              modules={[Navigation, Pagination]}
+              spaceBetween={20}
+              slidesPerView={1}
+              navigation={{
+                nextEl: ".photo-modal-next",
+                prevEl: ".photo-modal-prev",
+              }}
+              pagination={{
+                clickable: true,
+                el: ".photo-modal-pagination",
+              }}
+              initialSlide={selectedImageIndex}
+              style={{
+                width: "100%",
+                height: "80vh",
+                maxHeight: "600px",
+              }}
+            >
+              {photos.map((photo, index) => {
+                const imageUrl = photo.fullUrl || photo.url;
+                return (
+                  <SwiperSlide key={photo.id || index}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "100%",
+                      }}
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={
+                          photo.alt || photo.name || `다인이 사진 ${index + 1}`
+                        }
+                        style={{
+                          maxWidth: "100%",
+                          maxHeight: "100%",
+                          objectFit: "contain",
+                          borderRadius: "0", // border 제거
+                          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
+                        }}
+                        onError={(e) => {
+                          console.error("모달 이미지 로드 실패:", photo);
+                          e.target.src = photo.thumbnailUrl || photo.url;
+                        }}
+                      />
+                    </div>
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
+
+            {/* Custom navigation buttons */}
+            <div
+              className="photo-modal-prev"
+              style={{
+                position: "absolute",
+                left: "20px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "50px",
+                height: "50px",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                zIndex: 10001,
+                color: "white",
+                fontSize: "24px",
+                fontWeight: "bold",
+                border: "none",
+              }}
+            >
+              ‹
+            </div>
+
+            <div
+              className="photo-modal-next"
+              style={{
+                position: "absolute",
+                right: "20px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "50px",
+                height: "50px",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                zIndex: 10001,
+                color: "white",
+                fontSize: "24px",
+                fontWeight: "bold",
+                border: "none",
+              }}
+            >
+              ›
+            </div>
+
+            {/* Pagination */}
+            <div
+              className="photo-modal-pagination"
+              style={{
+                position: "absolute",
+                bottom: "30px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 10001,
+              }}
+            />
           </div>
         </div>
       )}
@@ -360,7 +479,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 1001,
+            zIndex: 10001,
           }}
         >
           <div

@@ -1,4 +1,4 @@
-// src/components/MonthlyPhotos.jsx - 상태 동기화 수정 버전
+// src/components/MonthlyPhotos.jsx
 import React, { useState, useEffect } from "react";
 import PhotoUpload from "./PhotoUpload";
 import { getMonthlyPhotos } from "../utils/cloudinary";
@@ -39,48 +39,33 @@ const MonthlyPhotos = ({
     { month: 12, name: "12개월", color: "#90EE90" },
   ];
 
-  // 월별 사진들을 가져오는 함수 (캐시 활용)
   const getPhotosForMonth = (monthNum) => {
-    // 먼저 props에서 받은 photos 확인
     const propsPhotos = photos.filter((p) => p.month === monthNum);
-
-    // 캐시된 데이터가 있으면 합치기
     const cachedPhotos = monthlyPhotosCache[monthNum] || [];
-
-    // 중복 제거 (id 기준)
     const allPhotos = [...propsPhotos];
     cachedPhotos.forEach((cached) => {
       if (!allPhotos.find((p) => p.id === cached.id)) {
         allPhotos.push(cached);
       }
     });
-
-    // 최신순 정렬
     allPhotos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
     console.log(`${monthNum}월 사진 개수:`, allPhotos.length);
     return allPhotos;
   };
 
-  // 특정 월의 모든 사진을 Cloudinary에서 직접 가져오기
   const loadMonthlyPhotos = async (monthNum) => {
     if (monthlyPhotosCache[monthNum]) {
       console.log(`${monthNum}월 캐시된 데이터 사용`);
       return monthlyPhotosCache[monthNum];
     }
-
     try {
       setLoading(true);
       console.log(`${monthNum}월 사진을 Cloudinary에서 직접 로드...`);
-
       const monthPhotos = await getMonthlyPhotos(monthNum);
-
-      // 캐시에 저장
       setMonthlyPhotosCache((prev) => ({
         ...prev,
         [monthNum]: monthPhotos,
       }));
-
       console.log(`${monthNum}월: ${monthPhotos.length}장 로드 완료`);
       return monthPhotos;
     } catch (error) {
@@ -91,30 +76,13 @@ const MonthlyPhotos = ({
     }
   };
 
-  // 전체 통계 계산
-  const getTotalStats = () => {
-    const totalPhotos = photos.length;
-    const monthsWithPhotos = months.filter(
-      (m) => getPhotosForMonth(m.month).length > 0
-    ).length;
-    const averagePerMonth =
-      monthsWithPhotos > 0 ? Math.round(totalPhotos / monthsWithPhotos) : 0;
-
-    return { totalPhotos, monthsWithPhotos, averagePerMonth };
-  };
-
   const handleMonthSelect = async (monthNum) => {
     console.log(`${monthNum}월 선택됨`);
-
     if (selectedMonth === monthNum) {
-      // 같은 월을 다시 클릭하면 닫기
       setSelectedMonth(null);
       return;
     }
-
     setSelectedMonth(monthNum);
-
-    // 해당 월의 모든 사진을 로드
     await loadMonthlyPhotos(monthNum);
   };
 
@@ -125,7 +93,6 @@ const MonthlyPhotos = ({
 
   const closeModal = () => setSelectedImage(null);
 
-  // 이미지 에러 처리
   const handleImageError = (photoId, imageUrl) => {
     console.error("이미지 로드 실패:", imageUrl);
     setImageErrors((prev) => new Set([...prev, photoId]));
@@ -139,43 +106,27 @@ const MonthlyPhotos = ({
     });
   };
 
-  // 업로드 완료 후 상태 동기화 (수정된 버전)
   const handlePhotoUploaded = async (newPhoto) => {
     console.log("새 사진 업로드됨:", newPhoto);
-
-    // 1. 상위 컴포넌트(App.jsx)에 새 사진 정보 전달
     onAddPhoto(newPhoto);
-
-    // 2. 현재 컴포넌트의 월별 캐시에서 해당 월의 데이터만 제거
-    //    다음에 이 월을 클릭할 때 API를 통해 최신 데이터를 다시 불러오게 함
     setMonthlyPhotosCache((prev) => {
       const updatedCache = { ...prev };
       delete updatedCache[newPhoto.month];
       console.log(` ${newPhoto.month}월 캐시를 비웠습니다.`);
       return updatedCache;
     });
-
-    // 3. 업로드 UI 닫기 및 월별 갤러리로 돌아가기
     setShowUpload(false);
-
-    // 4. 현재 선택된 월에 사진을 추가했다면, 잠시 후 해당 월의 사진 목록을 다시 로드
     if (selectedMonth === newPhoto.month) {
       console.log(`${newPhoto.month}월 사진 목록을 새로고침합니다.`);
-      // API 반영 시간을 고려하여 약간의 딜레이 후 로드
       setTimeout(() => {
         loadMonthlyPhotos(newPhoto.month);
       }, 500);
     }
   };
 
-  // 삭제 완료 후 캐시 새로고침
   const handlePhotosDeleted = (deletedIds) => {
     console.log("사진 삭제됨:", deletedIds);
-
-    // 상위 컴포넌트에 알림
     onDeletePhotos(deletedIds);
-
-    // 캐시에서도 제거
     setMonthlyPhotosCache((prev) => {
       const updated = { ...prev };
       Object.keys(updated).forEach((month) => {
@@ -187,7 +138,6 @@ const MonthlyPhotos = ({
     });
   };
 
-  // 'Esc' 키로 모달을 닫는 기능
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") closeModal();
@@ -198,7 +148,6 @@ const MonthlyPhotos = ({
     }
   }, [selectedImage]);
 
-  // 사진 업로드 화면
   if (showUpload) {
     const monthInfo = months.find((m) => m.month === uploadMonth);
     return (
@@ -214,15 +163,10 @@ const MonthlyPhotos = ({
     );
   }
 
-  const stats = getTotalStats();
-
-  // 기본 월별 갤러리 화면
   return (
     <div className="monthly-photos-container">
       <div className="monthly-header">
-        <button className="fortune-btn" onClick={onBack}>
-          ← 돌아가기
-        </button>
+        {/* 돌아가기 버튼 제거됨 */}
         <div className="monthly-title">
           <span className="month-emoji-large">📅</span>
           <h1>개월별 사진 갤러리</h1>

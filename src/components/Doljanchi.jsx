@@ -23,7 +23,7 @@ const Doljanchi = ({ partyDate }) => {
   // 수정된 호텔 정보
   const hotelInfo = {
     name: "메이필드 호텔 낙원",
-    address: "서울특별시 중구 낙원동 18-1",
+    address: "서울특별시 강서구 외발산동 방화대로 94",
     lat: 37.5704,
     lng: 126.9869,
   };
@@ -192,9 +192,10 @@ const Doljanchi = ({ partyDate }) => {
 
       {/* 지도 및 위치 정보 */}
       <div className="doljanchi-location-card">
-        <h3 className="location-title">오시는 길</h3>
         <div className="location-address-card">
+          <h3 className="location-title">오시는 길</h3>
           <p className="location-address">{hotelInfo.address}</p>
+          <p className="location-address">{hotelInfo.name}</p>
         </div>
 
         {/* 구글맵 임베드 */}

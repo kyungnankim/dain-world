@@ -1,4 +1,4 @@
-// App.jsx - React Router 적용 버전 + TopNavigation
+// App.jsx - 네비게이션이 항상 표시되도록 수정된 최종 버전
 import React, { useState, useEffect, useCallback } from "react";
 import {
   BrowserRouter as Router,
@@ -8,7 +8,8 @@ import {
   useLocation,
 } from "react-router-dom";
 import "./App.css";
-import Welcome from "./components/Welcome";
+// Welcome 컴포넌트는 더 이상 사용되지 않으므로 import 문을 삭제하거나 주석 처리할 수 있습니다.
+// import Welcome from "./components/Welcome";
 import Anniversary from "./components/Anniversary";
 import Doljanchi from "./components/Doljanchi";
 import PhotoGallery from "./components/PhotoGallery";
@@ -156,8 +157,6 @@ const AppContent = () => {
     }
   }, []);
 
-  const isMobile = () => window.innerWidth <= 768;
-
   // 앱 시작시 사진 로드
   useEffect(() => {
     fetchCloudinaryPhotos();
@@ -166,12 +165,6 @@ const AppContent = () => {
   const dainInfo = {
     birthday: "2024-09-23",
     dolPartyDate: "2025-09-13",
-  };
-
-  const [showWelcome, setShowWelcome] = useState(true);
-
-  const handleEnterSite = () => {
-    setShowWelcome(false);
   };
 
   // 사진 삭제 핸들러
@@ -315,16 +308,14 @@ const AppContent = () => {
 
   return (
     <>
-      {/* 상단 네비게이션 */}
-      {(!showWelcome || !isMobile()) && (
-        <TopNavigation
-          activeView={currentView}
-          onGoToMain={handleGoToMain}
-          onVideoClick={handleVideoClick}
-          onGalleryClick={handleGalleryClick}
-          onGameClick={handleGameClick}
-        />
-      )}
+      {/* 상단 네비게이션 - 항상 렌더링 */}
+      <TopNavigation
+        activeView={currentView}
+        onGoToMain={handleGoToMain}
+        onVideoClick={handleVideoClick}
+        onGalleryClick={handleGalleryClick}
+        onGameClick={handleGameClick}
+      />
 
       <Routes>
         {/* 메인 페이지 */}
@@ -332,28 +323,23 @@ const AppContent = () => {
           path="/"
           element={
             <>
-              {(showWelcome || !isMobile()) && (
-                <div
-                  className={`container ${
-                    !showWelcome || !isMobile() ? "page-content-with-nav" : ""
-                  }`}
-                >
-                  <Doljanchi partyDate={dainInfo.dolPartyDate} />
+              {/* 메인 페이지 컨텐츠 - 항상 렌더링 */}
+              <div className="container page-content-with-nav">
+                <Doljanchi partyDate={dainInfo.dolPartyDate} />
 
-                  <div className="card game-promotion-card">
-                    <h2>✨ 다인이 맘마주기 게임 ✨</h2>
-                    <button
-                      className="fortune-btn"
-                      onClick={() => navigate("/game")}
-                    >
-                      게임 시작하기
-                    </button>
-                  </div>
-
-                  <PhotoGallery photos={allPhotos} />
-                  <TodayFortune photos={allPhotos} />
+                <div className="card game-promotion-card">
+                  <h2>✨ 다인이 맘마주기 게임 ✨</h2>
+                  <button
+                    className="fortune-btn"
+                    onClick={() => navigate("/game")}
+                  >
+                    게임 시작하기
+                  </button>
                 </div>
-              )}
+
+                <PhotoGallery photos={allPhotos} />
+                <TodayFortune photos={allPhotos} />
+              </div>
             </>
           }
         />
@@ -385,29 +371,23 @@ const AppContent = () => {
         />
       </Routes>
 
-      {/* 플로팅 버튼 (스크롤만) */}
-      {(!showWelcome || !isMobile()) && (
-        <FloatingButtons activeView={currentView} />
-      )}
+      {/* 플로팅 버튼 - 항상 렌더링 */}
+      <FloatingButtons activeView={currentView} />
 
-      {/* 하단 네비게이션 바 */}
-      {(!showWelcome || !isMobile()) && (
-        <>
-          <BottomNavigation
-            onCallClick={handleCallClick}
-            onDirectionsClick={handleDirectionsClick}
-            onGalleryClick={handleGalleryClick}
-            onShareClick={handleShareClick}
-          />
+      {/* 하단 네비게이션 바 - 항상 렌더링 */}
+      <BottomNavigation
+        onCallClick={handleCallClick}
+        onDirectionsClick={handleDirectionsClick}
+        onGalleryClick={handleGalleryClick}
+        onShareClick={handleShareClick}
+      />
 
-          {/* 전화번호 선택 모달 */}
-          <PhoneContactModal
-            isOpen={showPhoneModal}
-            onClose={() => setShowPhoneModal(false)}
-            contacts={contacts}
-          />
-        </>
-      )}
+      {/* 전화번호 선택 모달 */}
+      <PhoneContactModal
+        isOpen={showPhoneModal}
+        onClose={() => setShowPhoneModal(false)}
+        contacts={contacts}
+      />
     </>
   );
 };
