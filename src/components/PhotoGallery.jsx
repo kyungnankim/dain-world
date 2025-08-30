@@ -97,10 +97,10 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
   if (!photos || photos.length === 0) {
     return (
       <div className="card">
-        <h2>📸 다인이의 성장 앨범</h2>
+        <h2>다인이의 성장 앨범</h2>
         <div style={{ textAlign: "center", padding: "40px" }}>
-          <p>아직 사진이 없어요 📷</p>
-          <p>월별 사진 갤러리에서 사진을 추가해주세요!</p>
+          <p>아직 사진이 없어요.</p>
+          <p>월별 사진 갤러리에서 사진을 추가해주세요.</p>
         </div>
       </div>
     );
@@ -117,7 +117,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
             marginBottom: "10px",
           }}
         >
-          <h2>📸 다인이의 성장 앨범</h2>
+          <h2>다인이의 성장 앨범</h2>
 
           {/* 삭제 기능이 prop으로 전달된 경우에만 표시 */}
           {onDeletePhotos && (
