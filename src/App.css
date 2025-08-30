@@ -1523,3 +1523,187 @@ h2 {
     filter: contrast(1.2);
   }
 }
+/* === 전화번호 선택 모달 스타일 === */
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #fce4ec 100%);
+  border: 2px solid #f8bbd9;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f8bbd9, #e91e63, #f8bbd9);
+  border-radius: 15px 15px 0 0;
+}
+
+.contact-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(233, 30, 99, 0.2);
+  border-color: #e91e63;
+  background: linear-gradient(135deg, #fce4ec 0%, #ffffff 100%);
+}
+
+.contact-item:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+}
+
+.contact-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.contact-name {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: #e91e63;
+  margin-bottom: 5px;
+}
+
+.contact-number {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #8d6e63;
+  letter-spacing: 0.5px;
+}
+
+.contact-description {
+  font-size: 0.9em;
+  color: #999;
+  font-style: italic;
+  margin-top: 3px;
+}
+
+.call-icon {
+  font-size: 2em;
+  background: linear-gradient(135deg, #f8bbd9, #e91e63);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: pulse 2s infinite;
+  margin-left: 15px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 모바일에서 터치 피드백 개선 */
+@media (max-width: 768px) {
+  .contact-item {
+    padding: 18px;
+    border-radius: 12px;
+  }
+
+  .contact-name {
+    font-size: 1.2em;
+  }
+
+  .contact-number {
+    font-size: 1em;
+  }
+
+  .contact-description {
+    font-size: 0.85em;
+  }
+
+  .call-icon {
+    font-size: 1.8em;
+    margin-left: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-item {
+    padding: 15px;
+    border-radius: 10px;
+  }
+
+  .contact-name {
+    font-size: 1.1em;
+  }
+
+  .contact-number {
+    font-size: 0.95em;
+  }
+
+  .call-icon {
+    font-size: 1.6em;
+  }
+}
+
+/* 접근성을 위한 포커스 스타일 */
+.contact-item:focus {
+  outline: 3px solid rgba(233, 30, 99, 0.5);
+  outline-offset: 2px;
+}
+
+/* 터치 디바이스에서 더 나은 상호작용을 위한 스타일 */
+@media (hover: none) and (pointer: coarse) {
+  .contact-item:hover {
+    transform: none;
+  }
+
+  .contact-item:active {
+    transform: scale(0.98);
+    background: linear-gradient(135deg, #f8bbd9 0%, #fce4ec 100%);
+  }
+}
+
+/* 모달 내부의 연락처 제목 스타일 */
+.modal-content h3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.5em;
+}
+
+/* 로딩 상태를 위한 스타일 (필요시 사용) */
+.contact-item.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.contact-item.loading .call-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

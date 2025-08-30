@@ -1,27 +1,69 @@
-// src/components/PhotoGallery.jsx
+// PhotoGallery.jsx - 삭제 기능 추가 버전
 import React, { useState, useCallback, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 
-function PhotoGallery({ photos = [] }) {
+function PhotoGallery({ photos = [], onDeletePhotos }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageErrors, setImageErrors] = useState(new Set());
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedForDeletion, setSelectedForDeletion] = useState(new Set());
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+
+  const CORRECT_PASSWORD = "0923"; // 삭제 비밀번호
 
   useEffect(() => {
     console.log("PhotoGallery - 받은 사진 개수:", photos.length);
-    console.log("PhotoGallery - 사진 데이터:", photos);
   }, [photos]);
 
-  const openModal = useCallback((photo) => {
-    console.log("모달 열기:", photo);
-    setSelectedImage(photo);
-  }, []);
+  const openModal = useCallback(
+    (photo) => {
+      if (deleteMode) return; // 삭제 모드에서는 모달 열지 않음
+      setSelectedImage(photo);
+    },
+    [deleteMode]
+  );
 
   const closeModal = useCallback(() => {
     setSelectedImage(null);
   }, []);
+
+  const toggleDeleteMode = () => {
+    setDeleteMode(!deleteMode);
+    setSelectedForDeletion(new Set());
+  };
+
+  const togglePhotoSelection = (photoId) => {
+    setSelectedForDeletion((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleDeleteRequest = () => {
+    if (selectedForDeletion.size === 0) return;
+    setShowPasswordPrompt(true);
+  };
+
+  const handlePasswordSubmit = () => {
+    if (passwordInput === CORRECT_PASSWORD) {
+      onDeletePhotos?.(Array.from(selectedForDeletion));
+      setShowPasswordPrompt(false);
+      setPasswordInput("");
+      setSelectedForDeletion(new Set());
+      setDeleteMode(false);
+    } else {
+      alert("비밀번호가 틀렸습니다.");
+    }
+  };
 
   const handleKeyDown = useCallback(
     (e) => {
@@ -45,7 +87,6 @@ function PhotoGallery({ photos = [] }) {
   }, []);
 
   const handleImageLoad = useCallback((photoId) => {
-    console.log("이미지 로드 성공:", photoId);
     setImageErrors((prev) => {
       const newSet = new Set(prev);
       newSet.delete(photoId);
@@ -68,43 +109,104 @@ function PhotoGallery({ photos = [] }) {
   return (
     <>
       <div className="card">
-        <h2>📸 다인이의 성장 앨범</h2>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+          }}
+        >
+          <h2>📸 다인이의 성장 앨범</h2>
+
+          {/* 삭제 기능이 prop으로 전달된 경우에만 표시 */}
+          {onDeletePhotos && (
+            <div>
+              <button
+                className="fortune-btn"
+                onClick={toggleDeleteMode}
+                style={{
+                  backgroundColor: deleteMode ? "#dc3545" : "#6c757d",
+                  fontSize: "12px",
+                  padding: "8px 12px",
+                }}
+              >
+                {deleteMode ? "취소" : "사진 삭제"}
+              </button>
+
+              {deleteMode && selectedForDeletion.size > 0 && (
+                <button
+                  className="fortune-btn"
+                  onClick={handleDeleteRequest}
+                  style={{
+                    backgroundColor: "#dc3545",
+                    fontSize: "12px",
+                    padding: "8px 12px",
+                    marginLeft: "5px",
+                  }}
+                >
+                  선택 삭제 ({selectedForDeletion.size})
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {deleteMode && (
+          <div
+            style={{
+              backgroundColor: "#fff3cd",
+              border: "1px solid #ffeaa7",
+              borderRadius: "8px",
+              padding: "10px",
+              marginBottom: "15px",
+              textAlign: "center",
+            }}
+          >
+            <p style={{ margin: 0, color: "#856404" }}>
+              ⚠️ 삭제할 사진을 선택하세요. 삭제된 사진은 복구할 수 없습니다.
+            </p>
+          </div>
+        )}
+
         <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
-          사진을 터치하면 크게 볼 수 있어요!
+          {deleteMode
+            ? "삭제할 사진을 선택하세요"
+            : "사진을 터치하면 크게 볼 수 있어요!"}
         </p>
+
         <Swiper
           modules={[Navigation]}
           spaceBetween={10}
           slidesPerView="auto"
           navigation
           breakpoints={{
-            320: {
-              slidesPerView: 2,
-              spaceBetween: 10,
-            },
-            480: {
-              slidesPerView: 3,
-              spaceBetween: 15,
-            },
-            768: {
-              slidesPerView: 4,
-              spaceBetween: 20,
-            },
+            320: { slidesPerView: 2, spaceBetween: 10 },
+            480: { slidesPerView: 3, spaceBetween: 15 },
+            768: { slidesPerView: 4, spaceBetween: 20 },
           }}
           style={{ padding: "20px 0", height: "300px" }}
         >
           {photos.map((photo, index) => {
             const hasError = imageErrors.has(photo.id);
             const imageUrl = photo.thumbnailUrl || photo.url;
+            const isSelected = selectedForDeletion.has(photo.id);
 
             return (
               <SwiperSlide key={photo.id || index}>
                 <div
                   className="gallery-item"
-                  onClick={() => !hasError && openModal(photo)}
+                  onClick={() =>
+                    deleteMode
+                      ? togglePhotoSelection(photo.id)
+                      : !hasError && openModal(photo)
+                  }
                   style={{
                     cursor: hasError ? "default" : "pointer",
                     position: "relative",
+                    border:
+                      deleteMode && isSelected ? "3px solid #dc3545" : "none",
+                    borderRadius: "10px",
                   }}
                 >
                   {hasError ? (
@@ -143,41 +245,61 @@ function PhotoGallery({ photos = [] }) {
                         objectFit: "cover",
                         borderRadius: "10px",
                         transition: "transform 0.3s ease, filter 0.3s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.transform = "scale(1.05)";
-                        e.target.style.filter = "brightness(1.1)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.transform = "scale(1)";
-                        e.target.style.filter = "brightness(1)";
+                        opacity: deleteMode && isSelected ? 0.7 : 1,
                       }}
                     />
                   )}
 
-                  {/* 월 표시 배지 
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "5px",
-                      left: "5px",
-                      backgroundColor: "rgba(255, 105, 180, 0.8)",
-                      color: "white",
-                      padding: "2px 8px",
-                      borderRadius: "12px",
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {photo.month}월
-                  </div>
-                  */}
+                  {/* 삭제 모드 선택 표시 */}
+                  {deleteMode && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        right: "10px",
+                        width: "25px",
+                        height: "25px",
+                        borderRadius: "50%",
+                        backgroundColor: isSelected
+                          ? "#dc3545"
+                          : "rgba(255,255,255,0.8)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "2px solid #dc3545",
+                      }}
+                    >
+                      {isSelected && (
+                        <span style={{ color: "white", fontSize: "16px" }}>
+                          ✓
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </SwiperSlide>
             );
           })}
         </Swiper>
+
+        {!onDeletePhotos && (
+          <div
+            style={{
+              marginTop: "15px",
+              padding: "10px",
+              backgroundColor: "#f0f8ff",
+              borderRadius: "8px",
+              fontSize: "14px",
+              color: "#666",
+              textAlign: "center",
+            }}
+          >
+            💡 사진을 삭제하려면 월별 사진 갤러리를 이용해주세요!
+          </div>
+        )}
       </div>
+
+      {/* 모달 */}
       {selectedImage && (
         <div
           className="modal-overlay"
@@ -209,10 +331,6 @@ function PhotoGallery({ photos = [] }) {
             <img
               src={selectedImage.fullUrl || selectedImage.url}
               alt={selectedImage.alt || selectedImage.name}
-              onError={(e) => {
-                console.error("모달 이미지 로드 실패:", selectedImage);
-                e.target.src = selectedImage.url;
-              }}
               style={{
                 width: "100%",
                 height: "auto",
@@ -234,34 +352,71 @@ function PhotoGallery({ photos = [] }) {
                 width: "30px",
                 height: "30px",
                 cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 fontSize: "22px",
                 color: "#333",
-                fontWeight: "bold",
-                fontFamily: "sans-serif",
-                lineHeight: 1,
-                padding: "0 0 2px 0",
               }}
             >
               ×
             </button>
+          </div>
+        </div>
+      )}
 
-            <div
+      {/* 비밀번호 입력 모달 */}
+      {showPasswordPrompt && (
+        <div
+          className="modal-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1001,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "10px",
+              minWidth: "300px",
+              textAlign: "center",
+            }}
+          >
+            <h3>삭제 확인</h3>
+            <p>선택한 사진을 영구적으로 삭제하려면 비밀번호를 입력하세요.</p>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="비밀번호"
               style={{
-                position: "absolute",
-                bottom: "-50px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                padding: "8px 16px",
-                borderRadius: "20px",
-                fontSize: "14px",
-                whiteSpace: "nowrap",
+                width: "100%",
+                padding: "10px",
+                marginBottom: "15px",
+                border: "1px solid #ccc",
+                borderRadius: "5px",
               }}
-            >
-              {selectedImage.month}월 • {"다인이 사진"}
+            />
+            <div>
+              <button
+                className="fortune-btn"
+                onClick={handlePasswordSubmit}
+                style={{ marginRight: "10px" }}
+              >
+                확인
+              </button>
+              <button
+                className="fortune-btn"
+                onClick={() => setShowPasswordPrompt(false)}
+              >
+                취소
+              </button>
             </div>
           </div>
         </div>
