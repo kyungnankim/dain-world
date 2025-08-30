@@ -38,7 +38,7 @@ const YouTubePlayer = ({ videoId, onReady, onError }) => {
   }, [videoId, playerId, onReady, onError]);
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div className="youtube-player-container">
       <div id={playerId} />
     </div>
   );
@@ -56,7 +56,7 @@ const VideoGallery = ({ onBack }) => {
       videoId: "9wkbeXGS5v4",
       date: "2024-10-15",
       description:
-        "다인이의 첫 광고 패러디 영상입니다. 찰랑거리는 머릿결을 감상하세요.",
+        "다인이의 첫 광고 패러디 영상입니다. 찰랑거리는 머리결을 감상하세요.",
     },
     {
       id: 2,
@@ -81,7 +81,7 @@ const VideoGallery = ({ onBack }) => {
       title: "[효과]세상을 보며 환하게 웃는 다인이",
       videoId: "1OVWaPMc-sY",
       date: "2025-01-10",
-      description: "까르르 웃는 모습이 매력적인 다인이의 행복한 순간입니다.",
+      description: "깔르르 웃는 모습이 매력적인 다인이의 행복한 순간입니다.",
     },
     {
       id: 5,
@@ -182,7 +182,7 @@ const VideoGallery = ({ onBack }) => {
     {
       id: 17,
       type: "youtube",
-      title: "다인이 행복한 순간 💝",
+      title: "다인이 행복한 순간 💕",
       videoId: "gfsf0_RwCoM",
       date: "2025-02-23",
       description: "보는 사람까지 행복해지는 다인이의 미소가 가득한 영상!",
@@ -462,75 +462,25 @@ const VideoGallery = ({ onBack }) => {
   };
 
   return (
-    <div
-      className="video-gallery-container"
-      style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}
-    >
+    <div className="video-gallery-container">
       <div className="video-header">
         <button className="fortune-btn" onClick={onBack}>
           ← 돌아가기
         </button>
         <h1 className="video-title">🎬 다인이 동영상 갤러리</h1>
-        <div style={{ width: "86px" }} />
+        <div className="video-header-spacer" />
       </div>
 
-      <div
-        className="video-content"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "20px",
-        }}
-      >
+      <div className="video-content-grid">
         {allVideos.map((video) => (
-          <div
-            key={video.id}
-            className="video-card"
-            style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "20px",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-              border: "1px solid #e1e5e9",
-            }}
-          >
-            <div className="video-info-header" style={{ marginBottom: "15px" }}>
-              <h3
-                style={{
-                  margin: "0 0 8px 0",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  color: "#333",
-                }}
-              >
-                {video.title}
-              </h3>
-              <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
-                {video.date}
-              </p>
+          <div key={video.id} className="video-card">
+            <div className="video-info-header">
+              <h3 className="video-card-title">{video.title}</h3>
+              <p className="video-date">{video.date}</p>
             </div>
 
-            <div
-              className="responsive-video-wrapper"
-              style={{
-                marginBottom: "15px",
-                position: "relative",
-                width: "100%",
-                paddingTop: "56.25%",
-                backgroundColor: "#000",
-                borderRadius: "8px",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
+            <div className="responsive-video-wrapper">
+              <div className="video-player-container">
                 {playingVideoId === video.id ? (
                   video.type === "youtube" ? (
                     <YouTubePlayer
@@ -542,7 +492,7 @@ const VideoGallery = ({ onBack }) => {
                     // Vimeo 플레이어
                     <iframe
                       src={`https://player.vimeo.com/video/${video.vimeoId}?autoplay=1&title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&app_id=58479`}
-                      style={{ width: "100%", height: "100%" }}
+                      className="vimeo-iframe"
                       frameBorder="0"
                       allow="autoplay; fullscreen; picture-in-picture; clipboard-write"
                       allowFullScreen
@@ -551,57 +501,27 @@ const VideoGallery = ({ onBack }) => {
                   )
                 ) : (
                   <div
+                    className={`video-thumbnail ${
+                      video.type === "youtube"
+                        ? "youtube-thumbnail"
+                        : "vimeo-thumbnail"
+                    }`}
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      cursor: "pointer",
                       backgroundImage:
                         video.type === "youtube"
                           ? `url(https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg)`
                           : "",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
                     }}
                     onClick={() => handlePlay(video.id)}
                   >
-                    <div
-                      style={{
-                        fontSize: "48px",
-                        backgroundColor: "rgba(0,0,0,0.7)",
-                        borderRadius: "50%",
-                        padding: "20px",
-                        color: "white",
-                        transition: "transform 0.2s",
-                        display: "flex",
-                      }}
-                      onMouseOver={(e) =>
-                        (e.currentTarget.style.transform = "scale(1.1)")
-                      }
-                      onMouseOut={(e) =>
-                        (e.currentTarget.style.transform = "scale(1)")
-                      }
-                    >
-                      ▶️
-                    </div>
+                    <div className="video-play-button">▶️</div>
                   </div>
                 )}
               </div>
             </div>
 
             <div className="video-info-footer">
-              <p
-                style={{
-                  margin: 0,
-                  color: "#555",
-                  fontSize: "14px",
-                  lineHeight: "1.5",
-                }}
-              >
-                {video.description}
-              </p>
+              <p className="video-description">{video.description}</p>
             </div>
           </div>
         ))}

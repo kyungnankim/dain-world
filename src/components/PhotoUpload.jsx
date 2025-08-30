@@ -215,13 +215,12 @@ function PhotoUpload({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "24px" }}>📊</span>
           <div>
             <h4 style={{ margin: "0", color: "#2e7d32" }}>
               {monthName} 사진 현황: {existingPhotos.length}장
             </h4>
             <p style={{ margin: "5px 0 0 0", fontSize: "14px" }}>
-              원하는 만큼 사진을 업로드할 수 있습니다! 🎉
+              원하는 만큼 사진을 업로드할 수 있습니다.
             </p>
           </div>
         </div>
@@ -242,7 +241,7 @@ function PhotoUpload({
             id="photo-input"
           />
           <label htmlFor="photo-input" className="file-input-label">
-            📁 컴퓨터에서 사진 선택 (무제한!)
+            사진 선택
           </label>
         </div>
 
@@ -271,9 +270,7 @@ function PhotoUpload({
               onClick={handleUpload}
               disabled={uploading}
             >
-              {uploading
-                ? "업로드 중..."
-                : `🚀 ${previewImages.length}장 업로드`}
+              {uploading ? "업로드 중..." : `${previewImages.length}장 업로드`}
             </button>
           </div>
         )}

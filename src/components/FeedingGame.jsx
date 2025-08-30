@@ -209,6 +209,7 @@ function FeedingGame({ onBack }) {
       >
         돌아가기
       </button>
+
       <div className="feeding-game-stage-indicator">
         {currentStage.title} - {score}/{currentStage.maxScore}
       </div>
@@ -244,12 +245,13 @@ function FeedingGame({ onBack }) {
           }}
         />
       )}
+
       {!showTransition && !gameCompleted && (
-        <p className="feeding-game-instruction">
+        <div className="feeding-game-instruction">
           {currentStage.instruction}
           <br />
           <small>현재 음식: {currentFood.name}</small>
-        </p>
+        </div>
       )}
 
       {showTransition && (
@@ -285,13 +287,13 @@ function FeedingGame({ onBack }) {
               className="fortune-btn feeding-game-restart-button"
               onClick={restartGame}
             >
-              🎮 다시하기
+              다시하기
             </button>
             <button
               className="fortune-btn feeding-game-home-button"
               onClick={onBack}
             >
-              🏠 메인으로
+              메인으로
             </button>
           </div>
         </div>

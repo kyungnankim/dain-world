@@ -25,18 +25,18 @@ const MonthlyPhotos = ({
 
   // 월별 정보
   const months = [
-    { month: 1, name: "1개월", emoji: "❄️", color: "#87CEEB" },
-    { month: 2, name: "2개월", emoji: "💕", color: "#FFB6C1" },
-    { month: 3, name: "3개월", emoji: "🌸", color: "#98FB98" },
-    { month: 4, name: "4개월", emoji: "🌷", color: "#DDA0DD" },
-    { month: 5, name: "5개월", emoji: "🌹", color: "#F0E68C" },
-    { month: 6, name: "6개월", emoji: "☀️", color: "#FFE4B5" },
-    { month: 7, name: "7개월", emoji: "🏖️", color: "#40E0D0" },
-    { month: 8, name: "8개월", emoji: "🌻", color: "#FFD700" },
-    { month: 9, name: "9개월", emoji: "🍂", color: "#DEB887" },
-    { month: 10, name: "10개월", emoji: "🎃", color: "#FF6347" },
-    { month: 11, name: "11개월", emoji: "🍁", color: "#CD853F" },
-    { month: 12, name: "12개월", emoji: "🎄", color: "#90EE90" },
+    { month: 1, name: "1개월", color: "#87CEEB" },
+    { month: 2, name: "2개월", color: "#FFB6C1" },
+    { month: 3, name: "3개월", color: "#98FB98" },
+    { month: 4, name: "4개월", color: "#DDA0DD" },
+    { month: 5, name: "5개월", color: "#F0E68C" },
+    { month: 6, name: "6개월", color: "#FFE4B5" },
+    { month: 7, name: "7개월", color: "#40E0D0" },
+    { month: 8, name: "8개월", color: "#FFD700" },
+    { month: 9, name: "9개월", color: "#DEB887" },
+    { month: 10, name: "10개월", color: "#FF6347" },
+    { month: 11, name: "11개월", color: "#CD853F" },
+    { month: 12, name: "12개월", color: "#90EE90" },
   ];
 
   // 월별 사진들을 가져오는 함수 (캐시 활용)
@@ -71,7 +71,7 @@ const MonthlyPhotos = ({
 
     try {
       setLoading(true);
-      console.log(`🔍 ${monthNum}월 사진을 Cloudinary에서 직접 로드...`);
+      console.log(`${monthNum}월 사진을 Cloudinary에서 직접 로드...`);
 
       const monthPhotos = await getMonthlyPhotos(monthNum);
 
@@ -81,10 +81,10 @@ const MonthlyPhotos = ({
         [monthNum]: monthPhotos,
       }));
 
-      console.log(`✅ ${monthNum}월: ${monthPhotos.length}장 로드 완료`);
+      console.log(`${monthNum}월: ${monthPhotos.length}장 로드 완료`);
       return monthPhotos;
     } catch (error) {
-      console.error(`❌ ${monthNum}월 사진 로드 실패:`, error);
+      console.error(`${monthNum}월 사진 로드 실패:`, error);
       return [];
     } finally {
       setLoading(false);
@@ -139,11 +139,9 @@ const MonthlyPhotos = ({
     });
   };
 
-  // MonthlyPhotos.jsx
-
-  // ✅ 업로드 완료 후 상태 동기화 (수정된 버전)
+  // 업로드 완료 후 상태 동기화 (수정된 버전)
   const handlePhotoUploaded = async (newPhoto) => {
-    console.log("📷 새 사진 업로드됨:", newPhoto);
+    console.log("새 사진 업로드됨:", newPhoto);
 
     // 1. 상위 컴포넌트(App.jsx)에 새 사진 정보 전달
     onAddPhoto(newPhoto);
@@ -153,7 +151,7 @@ const MonthlyPhotos = ({
     setMonthlyPhotosCache((prev) => {
       const updatedCache = { ...prev };
       delete updatedCache[newPhoto.month];
-      console.log(`🗑️ ${newPhoto.month}월 캐시를 비웠습니다.`);
+      console.log(` ${newPhoto.month}월 캐시를 비웠습니다.`);
       return updatedCache;
     });
 
@@ -162,16 +160,17 @@ const MonthlyPhotos = ({
 
     // 4. 현재 선택된 월에 사진을 추가했다면, 잠시 후 해당 월의 사진 목록을 다시 로드
     if (selectedMonth === newPhoto.month) {
-      console.log(`🔄 ${newPhoto.month}월 사진 목록을 새로고침합니다.`);
+      console.log(`${newPhoto.month}월 사진 목록을 새로고침합니다.`);
       // API 반영 시간을 고려하여 약간의 딜레이 후 로드
       setTimeout(() => {
         loadMonthlyPhotos(newPhoto.month);
       }, 500);
     }
   };
+
   // 삭제 완료 후 캐시 새로고침
   const handlePhotosDeleted = (deletedIds) => {
-    console.log("🗑️ 사진 삭제됨:", deletedIds);
+    console.log("사진 삭제됨:", deletedIds);
 
     // 상위 컴포넌트에 알림
     onDeletePhotos(deletedIds);
@@ -228,57 +227,8 @@ const MonthlyPhotos = ({
           <span className="month-emoji-large">📅</span>
           <h1>개월별 사진 갤러리</h1>
         </div>
-        {/*<button
-          className="fortune-btn"
-          onClick={onRefresh}
-          style={{ backgroundColor: "#4CAF50" }}
-          title="전체 새로고침"
-        >
-          🔄
-        </button>
-         */}
       </div>
 
-      {/* 전체 통계 표시
-      <div
-        className="card"
-        style={{
-          margin: "20px",
-          padding: "15px",
-          backgroundColor: "#f8f9fa",
-          textAlign: "center",
-        }}
-      >
-        <h3 style={{ margin: "0 0 10px 0", color: "#333" }}>📊 사진 현황</h3>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-around",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <strong style={{ color: "#ff69b4" }}>{stats.totalPhotos}</strong>
-            <br />
-            <small>이 사진</small>
-          </div>
-          <div>
-            <strong style={{ color: "#4CAF50" }}>
-              {stats.monthsWithPhotos}
-            </strong>
-            <br />
-            <small>사진 있는 달</small>
-          </div>
-          <div>
-            <strong style={{ color: "#2196F3" }}>
-              {stats.averagePerMonth}
-            </strong>
-            <br />
-            <small>평균/월</small>
-          </div>
-        </div>
-      </div>
- */}
       <div className="monthly-content">
         <div className="compact-months-grid">
           {months.map((monthInfo) => {
@@ -287,44 +237,24 @@ const MonthlyPhotos = ({
             return (
               <div
                 key={monthInfo.month}
-                className={`compact-month-card ${isSelected ? "selected" : ""}`}
-                style={{
-                  backgroundColor: monthInfo.color,
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  transform: isSelected ? "scale(1.05)" : "scale(1)",
-                  border: isSelected
-                    ? "3px solid #ff69b4"
-                    : "2px solid transparent",
-                  opacity:
-                    loading && selectedMonth === monthInfo.month ? 0.7 : 1,
-                }}
+                className={`compact-month-card ${
+                  isSelected ? "selected" : ""
+                } ${
+                  loading && selectedMonth === monthInfo.month ? "loading" : ""
+                }`}
+                style={{ backgroundColor: monthInfo.color }}
                 onClick={() => handleMonthSelect(monthInfo.month)}
               >
                 <div className="compact-month-content">
+                  <div className="compact-month-name">{monthInfo.name}</div>
                   <div
-                    className="compact-month-emoji"
-                    style={{ fontSize: "24px" }}
-                  >
-                    {loading && selectedMonth === monthInfo.month
-                      ? "⏳"
-                      : monthInfo.emoji}
-                  </div>
-                  <div style={{ fontWeight: "bold", fontSize: "14px" }}>
-                    {monthInfo.name}
-                  </div>
-                  <div
-                    className="compact-photo-count"
-                    style={{
-                      fontSize: "12px",
-                      color: monthPhotoCount > 0 ? "#333" : "#999",
-                      fontWeight: monthPhotoCount > 0 ? "bold" : "normal",
-                    }}
+                    className={`compact-photo-count ${
+                      monthPhotoCount > 0 ? "has-photos" : "no-photos"
+                    }`}
                   >
                     {monthPhotoCount}장
                   </div>
                 </div>
-                {isSelected && <div className="selected-indicator">✓</div>}
               </div>
             );
           })}
@@ -334,15 +264,10 @@ const MonthlyPhotos = ({
           <div className="selected-month-photos">
             <div className="selected-month-header">
               <div className="selected-month-info">
-                <span className="selected-month-emoji">
-                  {months.find((m) => m.month === selectedMonth)?.emoji}
-                </span>
                 <h3>
                   {months.find((m) => m.month === selectedMonth)?.name} 다인이
                   사진
                 </h3>
-                {/**   <span className="selected-photo-count"> {getPhotosForMonth(selectedMonth).length}장</span>*/}
-
                 <button
                   className="upload-btn-compact"
                   onClick={() => {
@@ -365,32 +290,11 @@ const MonthlyPhotos = ({
                       key={photo.id}
                       className="selected-photo-item"
                       onClick={() => !hasError && openModal(photo)}
-                      style={{
-                        cursor: hasError ? "default" : "pointer",
-                        position: "relative",
-                      }}
                     >
                       {hasError ? (
-                        <div
-                          style={{
-                            width: "100%",
-                            height: "120px",
-                            backgroundColor: "#f5f5f5",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            borderRadius: "8px",
-                            border: "2px dashed #ddd",
-                          }}
-                        >
-                          <div style={{ textAlign: "center", color: "#999" }}>
-                            <div
-                              style={{ fontSize: "20px", marginBottom: "5px" }}
-                            >
-                              📷
-                            </div>
-                            <div style={{ fontSize: "10px" }}>로드 실패</div>
-                          </div>
+                        <div className="photo-error-placeholder">
+                          <div className="photo-error-icon">📷</div>
+                          <div className="photo-error-text">로드 실패</div>
                         </div>
                       ) : (
                         <img
@@ -401,51 +305,15 @@ const MonthlyPhotos = ({
                           decoding="async"
                           onLoad={() => handleImageLoad(photo.id)}
                           onError={() => handleImageError(photo.id, imageUrl)}
-                          style={{
-                            width: "100%",
-                            height: "120px",
-                            objectFit: "cover",
-                            borderRadius: "8px",
-                            transition: "transform 0.3s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.transform = "scale(1.05)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.transform = "scale(1)";
-                          }}
                         />
                       )}
-
-                      {/* 사진 이름 표시 
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "0",
-                          left: "0",
-                          right: "0",
-                          backgroundColor: "rgba(0,0,0,0.7)",
-                          color: "white",
-                          padding: "2px 5px",
-                          fontSize: "10px",
-                          borderRadius: "0 0 8px 8px",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {photo.name || "unnamed"}
-                      </div>
-                      */}
                     </div>
                   );
                 })}
               </div>
             ) : (
               <div className="no-selected-photos">
-                <span className="no-photos-emoji-large">
-                  {months.find((m) => m.month === selectedMonth)?.emoji}
-                </span>
+                <div className="no-photos-emoji-large">📷</div>
                 <h4>
                   {months.find((m) => m.month === selectedMonth)?.name}에는 아직
                   사진이 없어요
@@ -467,112 +335,26 @@ const MonthlyPhotos = ({
       </div>
 
       {selectedImage && (
-        <div
-          className="modal-overlay"
-          onClick={closeModal}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.9)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-            padding: "20px",
-            boxSizing: "border-box",
-          }}
-        >
+        <div className="modal-overlay" onClick={closeModal}>
           <div
-            className="modal-content"
+            className="modal-content photo-modal"
             onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "relative",
-              maxWidth: "90vw",
-              maxHeight: "90vh",
-            }}
           >
             <img
               src={selectedImage.fullUrl || selectedImage.url}
               alt={selectedImage.alt || selectedImage.name}
+              className="modal-photo"
               onError={(e) => {
                 console.error("모달 이미지 로드 실패:", selectedImage);
                 e.target.src = selectedImage.url;
               }}
-              style={{
-                width: "100%",
-                height: "auto",
-                maxWidth: "600px",
-                maxHeight: "80vh",
-                objectFit: "contain",
-                borderRadius: "10px",
-              }}
             />
-            <button
-              onClick={closeModal}
-              style={{
-                position: "absolute",
-                top: "-40px",
-                right: "0",
-                background: "rgba(255, 255, 255, 0.8)",
-                border: "none",
-                borderRadius: "50%",
-                width: "30px",
-                height: "30px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "22px",
-                color: "#333",
-                fontWeight: "bold",
-                fontFamily: "sans-serif",
-                lineHeight: 1,
-                padding: "0 0 2px 0",
-              }}
-            >
+            <button onClick={closeModal} className="modal-close-btn">
               ×
             </button>
 
-            <div
-              style={{
-                position: "absolute",
-                bottom: "-60px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                padding: "10px 20px",
-                borderRadius: "20px",
-                textAlign: "center",
-                minWidth: "300px",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  marginBottom: "5px",
-                }}
-              >
-                {selectedImage.month}월{" "}
-                {/* •{" "}  {"다인이 사진" || "다인이 사진"} */}
-              </div>
-              {/**  
-              <div style={{ fontSize: "12px", color: "#666" }}>
-                📁 Cloudinary Storage
-                {selectedImage.createdAt && (
-                  <span>
-                    {" "}
-                    •{" "}
-                    {new Date(selectedImage.createdAt).toLocaleDateString(
-                      "ko-KR"
-                    )}
-                  </span>
-                )}
-              </div>
-            */}
+            <div className="modal-photo-info">
+              <div className="modal-photo-month">{selectedImage.month}월</div>
             </div>
           </div>
         </div>

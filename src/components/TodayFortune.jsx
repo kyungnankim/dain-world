@@ -366,7 +366,7 @@ const TodayFortune = ({ photos = [] }) => {
 
   return (
     <div className="card fortune-card">
-      <h2>✨ 다인이의 오늘의 운세 ✨</h2>
+      <h2>✨ 오늘의 운세 ✨</h2>
 
       <div style={{ position: "relative", display: "inline-block" }}>
         {imageError ? (
@@ -445,26 +445,8 @@ const TodayFortune = ({ photos = [] }) => {
       </div>
 
       <button onClick={showFortune} className="fortune-btn">
-        {photos.length > 0 ? "🔮 운세 보기" : "운세 보기 (사진 없음)"}
+        {photos.length > 0 ? "🔮 운세 보기" : "운세 보기"}
       </button>
-
-      {photos.length === 0 && (
-        <div
-          style={{
-            marginTop: "15px",
-            padding: "10px",
-            backgroundColor: "#f0f8ff",
-            borderRadius: "8px",
-            fontSize: "14px",
-            color: "#666",
-            textAlign: "center",
-          }}
-        >
-          📸 월별 갤러리에서 사진을 추가하면
-          <br />
-          다인이 사진과 함께 운세를 볼 수 있어요!
-        </div>
-      )}
     </div>
   );
 };
