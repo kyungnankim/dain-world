@@ -281,22 +281,6 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
             );
           })}
         </Swiper>
-
-        {!onDeletePhotos && (
-          <div
-            style={{
-              marginTop: "15px",
-              padding: "10px",
-              backgroundColor: "#f0f8ff",
-              borderRadius: "8px",
-              fontSize: "14px",
-              color: "#666",
-              textAlign: "center",
-            }}
-          >
-            💡 사진을 삭제하려면 월별 사진 갤러리를 이용해주세요!
-          </div>
-        )}
       </div>
 
       {/* 모달 */}

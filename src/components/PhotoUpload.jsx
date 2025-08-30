@@ -205,27 +205,6 @@ function PhotoUpload({
         <h1>📷 {monthName} 사진 관리</h1>
       </div>
 
-      {/* ✅ 제한 안내 카드 - 단순한 현황 표시로 변경 */}
-      <div
-        className="card"
-        style={{
-          marginBottom: "20px",
-          backgroundColor: "#e8f5e8",
-          border: "2px solid #4caf50",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div>
-            <h4 style={{ margin: "0", color: "#2e7d32" }}>
-              {monthName} 사진 현황: {existingPhotos.length}장
-            </h4>
-            <p style={{ margin: "5px 0 0 0", fontSize: "14px" }}>
-              원하는 만큼 사진을 업로드할 수 있습니다.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* ✅ 제한 관련 스타일 및 비활성화 로직 모두 제거 */}
       <div className="card" style={{ marginBottom: "30px" }}>
         <h3>새로운 사진 추가하기</h3>
