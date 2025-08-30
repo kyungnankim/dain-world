@@ -216,7 +216,7 @@ const Doljanchi = ({ partyDate }) => {
           <div className="navi-buttons-container">
             {/* 카카오맵 로고 버튼 */}
             <div className="navi-btn kakao-btn" onClick={openKakaoNavi}>
-              <svg width="30" height="30" viewBox="0 0 24 24">
+              <svg width="15" height="15" viewBox="0 0 24 24">
                 <path
                   fill="#3c1e1e"
                   d="M12 3C7.03 3 3 6.58 3 10.95c0 4.38 4.18 7.46 6.89 9.64l2.11 1.7l2.11-1.7C16.82 18.41 21 15.33 21 10.95C21 6.58 16.97 3 12 3zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5z"
@@ -226,7 +226,7 @@ const Doljanchi = ({ partyDate }) => {
 
             {/* 네이버맵 로고 버튼 */}
             <div className="navi-btn naver-btn" onClick={openNaverNavi}>
-              <svg width="28" height="28" viewBox="0 0 24 24">
+              <svg width="15" height="15" viewBox="0 0 24 24">
                 <path
                   fill="white"
                   d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z"
@@ -236,7 +236,7 @@ const Doljanchi = ({ partyDate }) => {
 
             {/* 구글맵 로고 버튼 */}
             <div className="navi-btn google-btn" onClick={openGoogleNavi}>
-              <svg width="30" height="30" viewBox="0 0 24 24">
+              <svg width="15" height="15" viewBox="0 0 24 24">
                 <path
                   fill="#4285f4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -258,7 +258,7 @@ const Doljanchi = ({ partyDate }) => {
 
             {/* 티맵 로고 버튼 */}
             <div className="navi-btn tmap-btn" onClick={openTmap}>
-              <svg width="26" height="26" viewBox="0 0 24 24">
+              <svg width="15" height="15" viewBox="0 0 24 24">
                 <path
                   fill="white"
                   d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2zm0 2.83L17.1 18.4L12 16.17L6.9 18.4L12 4.83z"
