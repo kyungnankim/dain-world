@@ -20,15 +20,58 @@ const Doljanchi = ({ partyDate }) => {
     }
   }, [partyDate]);
 
-  // 수정된 호텔 정보
+  // 정확한 호텔 정보 - 강서구 주소
   const hotelInfo = {
     name: "메이필드 호텔 낙원",
-    address: "서울특별시 강서구 외발산동 방화대로 94",
+    address: "서울특별시 강서구 방화대로 94",
+    fullAddress: "서울특별시 강서구 외발산동 방화대로 94",
     lat: 37.5704,
     lng: 126.9869,
   };
 
-  // 카카오맵으로 길찾기
+  // 캘린더 생성 함수
+  const generateCalendar = () => {
+    const partyDate = new Date(2025, 8, 13); // 2025년 9월 13일 (month는 0부터 시작)
+    const year = partyDate.getFullYear();
+    const month = partyDate.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const firstDayOfWeek = firstDay.getDay(); // 0=일요일
+
+    const days = [];
+    const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+
+    // 이전 달의 마지막 날들
+    const prevMonth = new Date(year, month, 0);
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const day = prevMonth.getDate() - i;
+      days.push({ day: day, isEmpty: false, isOtherMonth: true });
+    }
+
+    // 현재 달 날짜들
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      days.push({
+        day: day,
+        isEmpty: false,
+        isOtherMonth: false,
+        isEventDay: day === 13, // 13일이 이벤트 날
+      });
+    }
+
+    // 다음 달 시작 날들로 채우기
+    const totalCells = 42; // 6주 * 7일
+    const remainingCells = totalCells - days.length;
+    for (let day = 1; day <= remainingCells; day++) {
+      days.push({ day: day, isEmpty: false, isOtherMonth: true });
+    }
+
+    return { days, dayNames, monthName: "9월" };
+  };
+
+  const { days, dayNames, monthName } = generateCalendar();
+
+  // 카카오맵으로 길찾기 - 정확한 주소 사용
   const openKakaoMap = () => {
     window.open(
       `https://map.kakao.com/link/to/${encodeURIComponent(hotelInfo.name)},${
@@ -40,13 +83,13 @@ const Doljanchi = ({ partyDate }) => {
 
   // 네이버맵으로 길찾기
   const openNaverMap = () => {
-    const query = encodeURIComponent(hotelInfo.name);
+    const query = encodeURIComponent(`${hotelInfo.name} ${hotelInfo.address}`);
     window.open(`https://map.naver.com/v5/search/${query}`, "_blank");
   };
 
   // 구글맵으로 길찾기
   const openGoogleMap = () => {
-    const query = encodeURIComponent(hotelInfo.address);
+    const query = encodeURIComponent(hotelInfo.fullAddress);
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${query}`,
       "_blank"
@@ -57,21 +100,18 @@ const Doljanchi = ({ partyDate }) => {
   const openKakaoNavi = () => {
     const isMobile = /Android|iPhone/i.test(navigator.userAgent);
     if (isMobile) {
-      // 카카오네비 앱 실행 시도
       window.location.href = `kakaonavi://navigate?ep=${hotelInfo.lat},${hotelInfo.lng}&by=CAR`;
-
-      // 2.5초 후 앱이 실행되지 않았다면 카카오맵 웹으로 이동
       setTimeout(() => {
         openKakaoMap();
       }, 2500);
     } else {
-      openKakaoMap(); // PC는 카카오맵 웹으로
+      openKakaoMap();
     }
   };
 
   // 구글맵 네비로 목적지 설정
   const openGoogleNavi = () => {
-    const query = encodeURIComponent(hotelInfo.address);
+    const query = encodeURIComponent(hotelInfo.fullAddress);
     window.open(
       `https://www.google.com/maps/dir/?api=1&destination=${query}`,
       "_blank"
@@ -82,51 +122,41 @@ const Doljanchi = ({ partyDate }) => {
   const openNaverNavi = () => {
     const isMobile = /Android|iPhone/i.test(navigator.userAgent);
     if (isMobile) {
-      // 네이버맵 앱 실행 시도 (호텔명과 좌표 모두 포함)
       const naviUrl = `nmap://search?query=${encodeURIComponent(
-        hotelInfo.name
+        `${hotelInfo.name} ${hotelInfo.address}`
       )}&appname=com.example.myapp`;
       window.location.href = naviUrl;
-
-      // 2.5초 후 앱이 실행되지 않았다면 네이버맵 웹으로 이동
       setTimeout(() => {
         openNaverMap();
       }, 2500);
     } else {
-      openNaverMap(); // PC는 네이버맵 웹으로
+      openNaverMap();
     }
   };
 
-  // 티맵 - 안정적인 대체 방안으로 수정
+  // 티맵
   const openTmap = () => {
     const isMobile = /Android|iPhone/i.test(navigator.userAgent);
 
     if (isMobile) {
-      // 안드로이드와 iOS 구분하여 처리
       const isAndroid = /Android/i.test(navigator.userAgent);
 
       if (isAndroid) {
-        // 안드로이드에서 티맵 실행 시도
         try {
           window.location.href = `tmap://search?name=${encodeURIComponent(
             hotelInfo.name
           )}`;
-
-          // 3초 후 실행 실패시 구글맵으로 대체
           setTimeout(() => {
             openGoogleNavi();
           }, 3000);
         } catch (error) {
-          // 즉시 구글맵으로 대체
           openGoogleNavi();
         }
       } else {
-        // iOS에서는 애플 지도 시도 후 구글맵으로 대체
         try {
           window.location.href = `maps://maps.google.com/maps?q=${encodeURIComponent(
-            hotelInfo.address
+            hotelInfo.fullAddress
           )}`;
-
           setTimeout(() => {
             openGoogleNavi();
           }, 2000);
@@ -135,7 +165,6 @@ const Doljanchi = ({ partyDate }) => {
         }
       }
     } else {
-      // PC에서는 구글맵으로
       openGoogleNavi();
     }
   };
@@ -168,9 +197,32 @@ const Doljanchi = ({ partyDate }) => {
         <div className="doljanchi-date">2025년 09월 13일 (토요일)</div>
         <div className="doljanchi-time">오후 5시 (17시)</div>
         <div className="doljanchi-venue">장소: {hotelInfo.name}</div>
+      </div>
 
-        <div className="doljanchi-dday-container">
-          <div className="doljanchi-dday">{dDay}</div>
+      {/* 깔끔한 캘린더 */}
+      <div className="clean-calendar-container">
+        <div className="clean-calendar-header">캘린더</div>
+        <div className="clean-calendar-month">{monthName}</div>
+
+        <div className="clean-calendar-grid">
+          {/* 요일 헤더 */}
+          {dayNames.map((dayName, index) => (
+            <div key={`header-${index}`} className="clean-calendar-day-header">
+              {dayName}
+            </div>
+          ))}
+
+          {/* 날짜 칸들 */}
+          {days.map((dayInfo, index) => (
+            <div
+              key={`day-${index}`}
+              className={`clean-calendar-day ${
+                dayInfo.isOtherMonth ? "other-month" : ""
+              } ${dayInfo.isEventDay ? "event-day" : ""}`}
+            >
+              {dayInfo.day}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -194,20 +246,25 @@ const Doljanchi = ({ partyDate }) => {
       <div className="doljanchi-location-card">
         <div className="location-address-card">
           <h3 className="location-title">오시는 길</h3>
-          <p className="location-address">{hotelInfo.address}</p>
+          <p className="location-address">{hotelInfo.fullAddress}</p>
           <p className="location-address">{hotelInfo.name}</p>
         </div>
 
-        {/* 구글맵 임베드 */}
+        {/* 구글맵 임베드 - 정확한 주소로 */}
         <div className="doljanchi-map-container">
           <iframe
             src={`https://maps.google.com/maps?q=${encodeURIComponent(
-              hotelInfo.address
+              hotelInfo.fullAddress
             )}&output=embed&z=16`}
             className="doljanchi-map"
             allowFullScreen=""
-            loading="lazy"
+            loading="eager"
             referrerPolicy="no-referrer-when-downgrade"
+            style={{
+              width: "100%",
+              height: "100%",
+              border: 0,
+            }}
           ></iframe>
         </div>
 
@@ -268,15 +325,6 @@ const Doljanchi = ({ partyDate }) => {
               </svg>
             </div>
           </div>
-
-          {/* 앱 이름 표시 
-          <div className="navi-labels-container">
-            <div className="navi-label">카카오맵</div>
-            <div className="navi-label">네이버맵</div>
-            <div className="navi-label">구글맵</div>
-            <div className="navi-label">티맵</div>
-          </div>
-          */}
         </div>
       </div>
 

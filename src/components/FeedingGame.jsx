@@ -104,26 +104,69 @@ function FeedingGame({ onBack }) {
     }
   };
 
+  // 화면 내에서만 음식이 움직이도록 수정된 함수
   const moveFood = () => {
     const isMobile = screenSize.width <= 768;
-    const padding = isMobile ? 50 : 100;
-    const bottomPadding = isMobile ? 150 : 300;
 
-    const top = Math.random() * (screenSize.height - bottomPadding) + padding;
-    const left = Math.random() * (screenSize.width - padding * 2) + padding;
-    setFoodPosition({ top: `${top}px`, left: `${left}px` });
+    // 화면 경계 설정 - 더 보수적으로 설정
+    const topPadding = isMobile ? 80 : 90; // 상단 네비게이션 아래
+    const bottomPadding = isMobile ? 160 : 180; // 하단 네비게이션 + 안내문 위
+    const sidePadding = isMobile ? 30 : 50; // 좌우 여백
+
+    // 실제 게임 영역 크기 계산
+    const gameAreaWidth = screenSize.width - sidePadding * 2;
+    const gameAreaHeight = screenSize.height - topPadding - bottomPadding;
+
+    // 음식 크기 고려 (90px)
+    const foodSize = 90;
+    const maxLeft = gameAreaWidth - foodSize;
+    const maxTop = gameAreaHeight - foodSize;
+
+    // 안전한 범위 내에서 랜덤 위치 계산
+    const safeLeft = Math.max(0, Math.random() * maxLeft);
+    const safeTop = Math.max(0, Math.random() * maxTop);
+
+    // 최종 위치 설정 (패딩 추가)
+    const finalLeft = sidePadding + safeLeft;
+    const finalTop = topPadding + safeTop;
+
+    setFoodPosition({
+      top: `${finalTop}px`,
+      left: `${finalLeft}px`,
+    });
     setFoodOpacity(1);
+  };
+
+  // 다인이를 화면 가운데로 초기 위치 설정
+  const initializeDainPosition = () => {
+    const isMobile = screenSize.width <= 768;
+    const topPadding = isMobile ? 80 : 90;
+    const bottomPadding = isMobile ? 160 : 180;
+
+    // 화면 중앙에 배치
+    const centerX = screenSize.width / 2;
+    const centerY =
+      topPadding + (screenSize.height - topPadding - bottomPadding) / 2;
+
+    setDainPosition({
+      top: `${centerY}px`,
+      left: `${centerX}px`,
+    });
   };
 
   const restartGame = () => {
     setStage(1);
     setScore(0);
     setCurrentFoodIndex(0);
-    setDainPosition({ top: "50%", left: "50%" });
     setGameCompleted(false);
     setShowTransition(false);
     setIsMoving(false);
-    moveFood();
+
+    // 다인이 위치 초기화 후 음식 위치 설정
+    setTimeout(() => {
+      initializeDainPosition();
+      moveFood();
+    }, 100);
   };
 
   const goToNextStage = () => {
@@ -133,7 +176,7 @@ function FeedingGame({ onBack }) {
       setStage(stage + 1);
       setScore(0);
       setCurrentFoodIndex(0);
-      setDainPosition({ top: "50%", left: "50%" });
+      initializeDainPosition();
       moveFood();
       setShowTransition(false);
     }, 3000);
@@ -144,12 +187,14 @@ function FeedingGame({ onBack }) {
 
     setIsMoving(true);
 
-    const isMobile = screenSize.width <= 768;
-    const offset = isMobile ? 25 : 35;
+    // 다인이가 음식 위치로 이동 (중앙 정렬을 위한 오프셋)
+    const dainSize = getDainSize();
+    const foodOffset = 45; // 음식 크기의 절반 (90px/2)
+    const dainOffset = dainSize / 2;
 
     const newDainPosition = {
-      top: `calc(${foodPosition.top} - ${offset}px)`,
-      left: `calc(${foodPosition.left} - ${offset}px)`,
+      top: `calc(${foodPosition.top} + ${foodOffset - dainOffset}px)`,
+      left: `calc(${foodPosition.left} + ${foodOffset - dainOffset}px)`,
     };
 
     setDainPosition(newDainPosition);
@@ -180,15 +225,23 @@ function FeedingGame({ onBack }) {
     }, 600);
   };
 
+  // 화면 크기 변경시 위치 재조정
   useEffect(() => {
-    if (screenSize.width > 0) {
-      moveFood();
+    if (screenSize.width > 0 && screenSize.height > 0) {
+      initializeDainPosition();
+      if (!showTransition) {
+        moveFood();
+      }
     }
   }, [screenSize.width, screenSize.height]);
 
+  // 스테이지 변경시 위치 재설정
   useEffect(() => {
     if (!showTransition && screenSize.width > 0) {
-      moveFood();
+      setTimeout(() => {
+        initializeDainPosition();
+        moveFood();
+      }, 100);
     }
   }, [stage]);
 
@@ -200,8 +253,16 @@ function FeedingGame({ onBack }) {
   const dainSize = getDainSize();
 
   return (
-    <div className="feeding-game-container" onClick={handleScreenClick}>
-      {/* 돌아가기 버튼 제거됨 */}
+    <div
+      className="feeding-game-container"
+      onClick={handleScreenClick}
+      style={{
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden", // 스크롤 방지
+        position: "relative",
+      }}
+    >
       <div className="feeding-game-stage-indicator">
         {currentStage.title} - {score}/{currentStage.maxScore}
       </div>
@@ -220,9 +281,17 @@ function FeedingGame({ onBack }) {
         alt="다인이"
         className="feeding-game-dain"
         style={{
-          ...dainPosition,
+          position: "absolute",
+          top: dainPosition.top,
+          left: dainPosition.left,
           width: `${dainSize}px`,
           height: `${dainSize}px`,
+          transform: "translate(-50%, -50%)", // 중앙 정렬
+          transition: isMoving
+            ? "top 0.5s ease-in-out, left 0.5s ease-in-out, width 0.3s ease, height 0.3s ease"
+            : "width 0.3s ease, height 0.3s ease",
+          zIndex: 2,
+          userSelect: "none",
         }}
       />
 
@@ -232,8 +301,15 @@ function FeedingGame({ onBack }) {
           alt={currentFood.name}
           className="feeding-game-food"
           style={{
-            ...foodPosition,
+            position: "absolute",
+            top: foodPosition.top,
+            left: foodPosition.left,
+            width: "90px",
+            height: "90px",
             opacity: foodOpacity,
+            transition: "opacity 0.5s",
+            zIndex: 1,
+            userSelect: "none",
           }}
         />
       )}

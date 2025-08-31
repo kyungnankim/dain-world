@@ -16,7 +16,9 @@ const MonthlyPhotos = ({
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [imageErrors, setImageErrors] = useState(new Set());
   const [monthlyPhotosCache, setMonthlyPhotosCache] = useState({});
+  const [monthPhotoCounts, setMonthPhotoCounts] = useState({}); // 월별 사진 개수 저장
   const [loading, setLoading] = useState(false);
+  const [countsLoading, setCountsLoading] = useState(true); // 개수 로딩 상태
 
   useEffect(() => {
     console.log("MonthlyPhotos - 받은 사진 개수:", photos.length);
@@ -38,6 +40,74 @@ const MonthlyPhotos = ({
     { month: 11, name: "11개월", color: "#CD853F" },
     { month: 12, name: "12개월", color: "#90EE90" },
   ];
+
+  // 컴포넌트 마운트 시 모든 월의 사진 개수를 미리 로드
+  useEffect(() => {
+    const loadAllMonthCounts = async () => {
+      setCountsLoading(true);
+      console.log("모든 월의 사진 개수 로딩 시작...");
+
+      const counts = {};
+
+      // 먼저 props로 받은 사진들에서 월별 개수 계산
+      photos.forEach((photo) => {
+        if (photo.month) {
+          counts[photo.month] = (counts[photo.month] || 0) + 1;
+        }
+      });
+
+      // 각 월별로 Cloudinary에서 추가 사진 개수 확인
+      const monthPromises = months.map(async (monthInfo) => {
+        try {
+          const monthPhotos = await getMonthlyPhotos(monthInfo.month);
+          // props 사진과 중복 제거
+          const propsPhotosForMonth = photos.filter(
+            (p) => p.month === monthInfo.month
+          );
+          const uniqueMonthPhotos = monthPhotos.filter(
+            (cloudPhoto) =>
+              !propsPhotosForMonth.find(
+                (propPhoto) => propPhoto.id === cloudPhoto.id
+              )
+          );
+
+          const totalCount =
+            (counts[monthInfo.month] || 0) + uniqueMonthPhotos.length;
+          counts[monthInfo.month] = totalCount;
+
+          // 캐시에도 저장
+          if (monthPhotos.length > 0) {
+            setMonthlyPhotosCache((prev) => ({
+              ...prev,
+              [monthInfo.month]: monthPhotos,
+            }));
+          }
+
+          console.log(`${monthInfo.month}월: ${totalCount}장`);
+          return { month: monthInfo.month, count: totalCount };
+        } catch (error) {
+          console.error(`${monthInfo.month}월 사진 개수 로드 실패:`, error);
+          counts[monthInfo.month] = counts[monthInfo.month] || 0;
+          return {
+            month: monthInfo.month,
+            count: counts[monthInfo.month] || 0,
+          };
+        }
+      });
+
+      try {
+        await Promise.all(monthPromises);
+        setMonthPhotoCounts(counts);
+        console.log("모든 월 사진 개수 로딩 완료:", counts);
+      } catch (error) {
+        console.error("월별 사진 개수 로딩 중 오류:", error);
+      } finally {
+        setCountsLoading(false);
+      }
+    };
+
+    loadAllMonthCounts();
+  }, [photos]); // photos가 변경될 때마다 다시 로드
 
   const getPhotosForMonth = (monthNum) => {
     const propsPhotos = photos.filter((p) => p.month === monthNum);
@@ -109,12 +179,21 @@ const MonthlyPhotos = ({
   const handlePhotoUploaded = async (newPhoto) => {
     console.log("새 사진 업로드됨:", newPhoto);
     onAddPhoto(newPhoto);
+
+    // 해당 월의 캐시와 개수 업데이트
     setMonthlyPhotosCache((prev) => {
       const updatedCache = { ...prev };
       delete updatedCache[newPhoto.month];
-      console.log(` ${newPhoto.month}월 캐시를 비웠습니다.`);
+      console.log(`${newPhoto.month}월 캐시를 비웠습니다.`);
       return updatedCache;
     });
+
+    // 사진 개수 업데이트
+    setMonthPhotoCounts((prev) => ({
+      ...prev,
+      [newPhoto.month]: (prev[newPhoto.month] || 0) + 1,
+    }));
+
     setShowUpload(false);
     if (selectedMonth === newPhoto.month) {
       console.log(`${newPhoto.month}월 사진 목록을 새로고침합니다.`);
@@ -127,6 +206,27 @@ const MonthlyPhotos = ({
   const handlePhotosDeleted = (deletedIds) => {
     console.log("사진 삭제됨:", deletedIds);
     onDeletePhotos(deletedIds);
+
+    // 삭제된 사진들의 월별 개수 업데이트
+    const deletedPhotos = photos.filter((p) => deletedIds.includes(p.id));
+    const monthCounts = {};
+    deletedPhotos.forEach((photo) => {
+      if (photo.month) {
+        monthCounts[photo.month] = (monthCounts[photo.month] || 0) + 1;
+      }
+    });
+
+    setMonthPhotoCounts((prev) => {
+      const updated = { ...prev };
+      Object.keys(monthCounts).forEach((month) => {
+        updated[month] = Math.max(
+          0,
+          (updated[month] || 0) - monthCounts[month]
+        );
+      });
+      return updated;
+    });
+
     setMonthlyPhotosCache((prev) => {
       const updated = { ...prev };
       Object.keys(updated).forEach((month) => {
@@ -166,7 +266,6 @@ const MonthlyPhotos = ({
   return (
     <div className="monthly-photos-container">
       <div className="monthly-header">
-        {/* 돌아가기 버튼 제거됨 */}
         <div className="monthly-title">
           <span className="month-emoji-large">📅</span>
           <h1>개월별 사진 갤러리</h1>
@@ -176,16 +275,20 @@ const MonthlyPhotos = ({
       <div className="monthly-content">
         <div className="compact-months-grid">
           {months.map((monthInfo) => {
-            const monthPhotoCount = getPhotosForMonth(monthInfo.month).length;
+            // 실제 사진 개수 표시 (로딩 중이면 "..." 표시)
+            const monthPhotoCount = countsLoading
+              ? "..."
+              : monthPhotoCounts[monthInfo.month] || 0;
             const isSelected = selectedMonth === monthInfo.month;
+            const isCurrentlyLoading =
+              loading && selectedMonth === monthInfo.month;
+
             return (
               <div
                 key={monthInfo.month}
                 className={`compact-month-card ${
                   isSelected ? "selected" : ""
-                } ${
-                  loading && selectedMonth === monthInfo.month ? "loading" : ""
-                }`}
+                } ${isCurrentlyLoading ? "loading" : ""}`}
                 style={{ backgroundColor: monthInfo.color }}
                 onClick={() => handleMonthSelect(monthInfo.month)}
               >
@@ -193,7 +296,9 @@ const MonthlyPhotos = ({
                   <div className="compact-month-name">{monthInfo.name}</div>
                   <div
                     className={`compact-photo-count ${
-                      monthPhotoCount > 0 ? "has-photos" : "no-photos"
+                      monthPhotoCount > 0 && !countsLoading
+                        ? "has-photos"
+                        : "no-photos"
                     }`}
                   >
                     {monthPhotoCount}장

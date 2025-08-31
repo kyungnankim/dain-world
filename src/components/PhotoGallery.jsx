@@ -1,4 +1,4 @@
-// PhotoGallery.jsx - Swiper 모달과 함께 개선된 버전
+// PhotoGallery.jsx - 네비게이션 화살표 제거, 스와이프만 가능
 import React, { useState, useCallback, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
@@ -50,37 +50,54 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
   };
 
   const handleDeleteRequest = () => {
-    if (selectedForDeletion.size === 0) return;
+    if (selectedForDeletion.size === 0) {
+      alert("삭제할 사진을 선택해주세요.");
+      return;
+    }
     setShowPasswordPrompt(true);
   };
 
   const handlePasswordSubmit = () => {
     if (passwordInput === CORRECT_PASSWORD) {
-      onDeletePhotos?.(Array.from(selectedForDeletion));
-      setShowPasswordPrompt(false);
-      setPasswordInput("");
-      setSelectedForDeletion(new Set());
-      setDeleteMode(false);
+      console.log("삭제할 사진 ID들:", Array.from(selectedForDeletion));
+
+      if (typeof onDeletePhotos === "function") {
+        onDeletePhotos(Array.from(selectedForDeletion));
+        setShowPasswordPrompt(false);
+        setPasswordInput("");
+        setSelectedForDeletion(new Set());
+        setDeleteMode(false);
+        alert("선택한 사진이 삭제되었습니다.");
+      } else {
+        console.error("onDeletePhotos 함수가 정의되지 않았습니다.");
+        alert("사진 삭제 기능을 사용할 수 없습니다.");
+      }
     } else {
       alert("비밀번호가 틀렸습니다.");
+      setPasswordInput("");
     }
   };
 
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Escape") {
-        closeModal();
+        if (showPasswordPrompt) {
+          setShowPasswordPrompt(false);
+          setPasswordInput("");
+        } else {
+          closeModal();
+        }
       }
     },
-    [closeModal]
+    [closeModal, showPasswordPrompt]
   );
 
   useEffect(() => {
-    if (selectedImageIndex !== null) {
+    if (selectedImageIndex !== null || showPasswordPrompt) {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [selectedImageIndex, handleKeyDown]);
+  }, [selectedImageIndex, handleKeyDown, showPasswordPrompt]);
 
   const handleImageError = useCallback((photoId, imageUrl) => {
     console.error("이미지 로드 실패:", imageUrl);
@@ -116,13 +133,15 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "10px",
+            flexWrap: "wrap",
+            gap: "10px",
           }}
         >
           <h2>다인이의 성장 앨범</h2>
 
           {/* 삭제 기능이 prop으로 전달된 경우에만 표시 */}
           {onDeletePhotos && (
-            <div>
+            <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
               <button
                 className="fortune-btn"
                 onClick={toggleDeleteMode}
@@ -130,6 +149,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
                   backgroundColor: deleteMode ? "#dc3545" : "#6c757d",
                   fontSize: "12px",
                   padding: "8px 12px",
+                  color: "white",
                 }}
               >
                 {deleteMode ? "취소" : "사진 삭제"}
@@ -143,7 +163,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
                     backgroundColor: "#dc3545",
                     fontSize: "12px",
                     padding: "8px 12px",
-                    marginLeft: "5px",
+                    color: "white",
                   }}
                 >
                   선택 삭제 ({selectedForDeletion.size})
@@ -173,14 +193,13 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
         <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
           {deleteMode
             ? "삭제할 사진을 선택하세요"
-            : "사진을 터치하면 크게 볼 수 있어요!"}
+            : "사진을 터치하면 크게 볼 수 있어요! 좌우로 스와이프하여 넘겨보세요."}
         </p>
 
+        {/* 네비게이션 화살표 제거, 스와이프만 가능 */}
         <Swiper
-          modules={[Navigation]}
           spaceBetween={10}
           slidesPerView="auto"
-          navigation
           breakpoints={{
             320: { slidesPerView: 2, spaceBetween: 10 },
             480: { slidesPerView: 3, spaceBetween: 15 },
@@ -284,7 +303,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
         </Swiper>
       </div>
 
-      {/* Swiper 모달 */}
+      {/* 모달에서는 네비게이션 유지 */}
       {selectedImageIndex !== null && (
         <div
           className="photo-modal-overlay"
@@ -321,7 +340,6 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
             {/* 닫기 버튼 */}
             <button
               onClick={closeModal}
-              className="photo-modal-close"
               style={{
                 position: "absolute",
                 top: "20px",
@@ -344,7 +362,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
               ×
             </button>
 
-            {/* Swiper for modal */}
+            {/* 모달에서는 네비게이션과 스와이프 모두 가능 */}
             <Swiper
               modules={[Navigation, Pagination]}
               spaceBetween={20}
@@ -385,7 +403,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
                           maxWidth: "100%",
                           maxHeight: "100%",
                           objectFit: "contain",
-                          borderRadius: "0", // border 제거
+                          borderRadius: "10px",
                           boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
                         }}
                         onError={(e) => {
@@ -399,7 +417,7 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
               })}
             </Swiper>
 
-            {/* Custom navigation buttons */}
+            {/* 모달 네비게이션 버튼들 */}
             <div
               className="photo-modal-prev"
               style={{
@@ -481,18 +499,30 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
             alignItems: "center",
             zIndex: 10001,
           }}
+          onClick={() => {
+            setShowPasswordPrompt(false);
+            setPasswordInput("");
+          }}
         >
           <div
             style={{
               backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "10px",
+              padding: "30px",
+              borderRadius: "15px",
               minWidth: "300px",
+              maxWidth: "90%",
               textAlign: "center",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <h3>삭제 확인</h3>
-            <p>선택한 사진을 영구적으로 삭제하려면 비밀번호를 입력하세요.</p>
+            <h3 style={{ margin: "0 0 15px 0", color: "#ff8f00" }}>
+              삭제 확인
+            </h3>
+            <p style={{ margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              선택한 {selectedForDeletion.size}장의 사진을 영구적으로 삭제하려면
+              비밀번호를 입력하세요.
+            </p>
             <input
               type="password"
               value={passwordInput}
@@ -500,23 +530,36 @@ function PhotoGallery({ photos = [], onDeletePhotos }) {
               placeholder="비밀번호"
               style={{
                 width: "100%",
-                padding: "10px",
-                marginBottom: "15px",
-                border: "1px solid #ccc",
-                borderRadius: "5px",
+                padding: "12px",
+                marginBottom: "20px",
+                border: "2px solid #ffe082",
+                borderRadius: "8px",
+                fontSize: "16px",
+                textAlign: "center",
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handlePasswordSubmit();
+                }
+              }}
+              autoFocus
             />
-            <div>
+            <div
+              style={{ display: "flex", gap: "10px", justifyContent: "center" }}
+            >
               <button
                 className="fortune-btn"
                 onClick={handlePasswordSubmit}
-                style={{ marginRight: "10px" }}
+                style={{ backgroundColor: "#dc3545", color: "white" }}
               >
-                확인
+                삭제하기
               </button>
               <button
                 className="fortune-btn"
-                onClick={() => setShowPasswordPrompt(false)}
+                onClick={() => {
+                  setShowPasswordPrompt(false);
+                  setPasswordInput("");
+                }}
               >
                 취소
               </button>

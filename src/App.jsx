@@ -1,4 +1,4 @@
-// App.jsx - 네비게이션이 항상 표시되도록 수정된 최종 버전
+// App.jsx - 전화 기능 수정
 import React, { useState, useEffect, useCallback } from "react";
 import {
   BrowserRouter as Router,
@@ -8,8 +8,6 @@ import {
   useLocation,
 } from "react-router-dom";
 import "./App.css";
-// Welcome 컴포넌트는 더 이상 사용되지 않으므로 import 문을 삭제하거나 주석 처리할 수 있습니다.
-// import Welcome from "./components/Welcome";
 import Anniversary from "./components/Anniversary";
 import Doljanchi from "./components/Doljanchi";
 import PhotoGallery from "./components/PhotoGallery";
@@ -21,12 +19,18 @@ import VideoGallery from "./components/VideoGallery";
 import MonthlyPhotos from "./components/MonthlyPhotos";
 import { getAllPhotos } from "./utils/cloudinary";
 
-// 전화번호 선택 모달 컴포넌트
+// 전화번호 선택 모달 컴포넌트 - 직접 전화 걸기로 수정
 const PhoneContactModal = ({ isOpen, onClose, contacts }) => {
   if (!isOpen) return null;
 
   const handleCall = (phoneNumber) => {
-    window.location.href = `tel:${phoneNumber}`;
+    // 바로 전화 걸기 - 추가 확인 단계 없이
+    try {
+      window.location.href = `tel:${phoneNumber}`;
+    } catch (error) {
+      // 대체 방법
+      window.open(`tel:${phoneNumber}`, "_self");
+    }
     onClose();
   };
 
@@ -35,7 +39,7 @@ const PhoneContactModal = ({ isOpen, onClose, contacts }) => {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <h3>📞 연락처 선택</h3>
         <p className="contact-modal-description">
-          통화하실 연락처를 선택해주세요
+          전화를 걸 연락처를 선택해주세요
         </p>
 
         <div className="contact-list">
@@ -145,7 +149,7 @@ const AppContent = () => {
     setError(null);
 
     try {
-      console.log(" Cloudinary에서 사진 불러오기 시작...");
+      console.log("Cloudinary에서 사진 불러오기 시작...");
       const photos = await getAllPhotos();
 
       setAllPhotos(photos);
@@ -337,7 +341,10 @@ const AppContent = () => {
                   </button>
                 </div>
 
-                <PhotoGallery photos={allPhotos} />
+                <PhotoGallery
+                  photos={allPhotos}
+                  onDeletePhotos={handlePhotoDelete}
+                />
                 <TodayFortune photos={allPhotos} />
               </div>
             </>
