@@ -432,10 +432,11 @@ const TodayFortune = ({ photos = [] }) => {
         id="fortune-text"
         style={{
           margin: "20px 0",
+
+          /*  backgroundColor: "#fff8f0",
           padding: "15px",
-          backgroundColor: "#fff8f0",
           borderRadius: "10px",
-          border: "2px solid #ffd700",
+              border: "2px solid #ffd700",*/
           fontSize: "16px",
           lineHeight: "1.5",
           textAlign: "center",

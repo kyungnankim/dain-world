@@ -242,9 +242,7 @@ const Doljanchi = ({ partyDate }) => {
 
       {/* 캘린더 - 13일 이벤트 강조 */}
       <div className="clean-calendar-container">
-        <div className="clean-calendar-header">캘린더</div>
-        <div className="clean-calendar-month">{monthName} 2025</div>
-
+        <div className="clean-calendar-month">{monthName}</div>
         <div className="clean-calendar-grid">
           {/* 요일 헤더 */}
           {dayNames.map((dayName, index) => (
