@@ -128,11 +128,6 @@ const AppContent = () => {
   // 연락처 정보
   const contacts = [
     {
-      name: "헬퍼",
-      number: "010-7503-6190",
-      description: "행사 도우미",
-    },
-    {
       name: "최영민",
       number: "010-9937-2374",
       description: "아빠",

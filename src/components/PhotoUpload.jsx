@@ -1,293 +1,597 @@
-// src/components/PhotoUpload.jsx
-import React, { useState, useRef, useEffect } from "react";
+// PhotoGallery.jsx - 네비게이션 화살표 제거, 스와이프만 가능
+import React, { useState, useCallback, useEffect } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
-const CORRECT_PASSWORD = "0923"; // 삭제 비밀번호
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const MAX_PHOTOS_PER_MONTH = 999;
-
-function PhotoUpload({
-  month,
-  monthName,
-  onBack,
-  onPhotoUploaded,
-  existingPhotos = [],
-  onDeleteSelectedPhotos,
-}) {
-  const [uploading, setUploading] = useState(false);
-  const [previewImages, setPreviewImages] = useState([]);
+function PhotoGallery({ photos = [], onDeletePhotos }) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [imageErrors, setImageErrors] = useState(new Set());
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedForDeletion, setSelectedForDeletion] = useState(new Set());
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
-  const [photosToDelete, setPhotosToDelete] = useState(new Set());
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [autoRedirectCountdown, setAutoRedirectCountdown] = useState(0);
-  const fileInputRef = useRef(null);
 
-  const canUpload = true;
-  const remainingSlots = 999;
-  const needsDelete = false;
+  const CORRECT_PASSWORD = "0923"; // 삭제 비밀번호
 
-  const generateCloudinaryUrl = (publicId, transformation = "") => {
-    const baseUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload`;
-    return `${baseUrl}${
-      transformation ? `/${transformation}` : ""
-    }/${publicId}`;
+  useEffect(() => {
+    console.log("PhotoGallery - 받은 사진 개수:", photos.length);
+  }, [photos]);
+
+  const openModal = useCallback(
+    (photo, index) => {
+      if (deleteMode) return; // 삭제 모드에서는 모달 열지 않음
+      setSelectedImageIndex(index);
+    },
+    [deleteMode]
+  );
+
+  const closeModal = useCallback(() => {
+    setSelectedImageIndex(null);
+  }, []);
+
+  const toggleDeleteMode = () => {
+    setDeleteMode(!deleteMode);
+    setSelectedForDeletion(new Set());
   };
 
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files).filter((f) =>
-      f.type.startsWith("image/")
-    );
-
-    if (files.length > 20) {
-      alert("한 번에 최대 20장까지 선택할 수 있습니다.");
-      return;
-    }
-
-    const newPreviews = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-      name: file.name,
-      id: `${Date.now()}-${file.name}`,
-    }));
-    setPreviewImages((prev) => [...prev, ...newPreviews]);
-  };
-
-  const handleUploadSuccess = (uploadedPhotos) => {
-    setUploadSuccess(true);
-    setAutoRedirectCountdown(3);
-    const countdown = setInterval(() => {
-      setAutoRedirectCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdown);
-          onBack();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const handleUpload = async () => {
-    if (previewImages.length === 0) return;
-    setUploading(true);
-    const failedUploads = [];
-
-    try {
-      const uploadPromises = previewImages.map(async (item) => {
-        try {
-          const formData = new FormData();
-          formData.append("month", month);
-          formData.append("file", item.file, item.name);
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
-          const result = await response.json();
-          if (!response.ok || !result.success) {
-            throw new Error(result.error || `'${item.name}' 업로드 실패`);
-          }
-          return result.photos[0];
-        } catch (uploadError) {
-          console.error(`💥 '${item.name}' 업로드 중 오류:`, uploadError);
-          failedUploads.push({ name: item.name, reason: uploadError.message });
-          return null;
-        }
-      });
-
-      const results = await Promise.all(uploadPromises);
-      const successfulUploads = results.filter((p) => p !== null);
-
-      if (successfulUploads.length === 0) {
-        throw new Error("모든 파일 업로드에 실패했습니다.");
-      }
-
-      const finalPhotos = successfulUploads.map((p) => ({
-        id: p.id,
-        url: p.url,
-        month: p.month,
-        name: p.name,
-        thumbnailUrl: generateCloudinaryUrl(
-          p.id,
-          "w_300,h_300,c_fill,q_auto,f_auto"
-        ),
-        fullUrl: generateCloudinaryUrl(
-          p.id,
-          "w_800,h_800,c_limit,q_auto,f_auto"
-        ),
-        createdAt: new Date().toISOString(),
-      }));
-
-      finalPhotos.forEach(onPhotoUploaded);
-      handleUploadSuccess(finalPhotos);
-
-      if (failedUploads.length > 0) {
-        const failedFileNames = failedUploads.map((f) => f.name).join(", ");
-        alert(`${failedUploads.length}개 파일 업로드 실패: ${failedFileNames}`);
-      }
-      setPreviewImages([]);
-    } catch (error) {
-      console.error("💥 전체 업로드 과정 오류:", error);
-      alert(`업로드 실패:\n${error.message}`);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const togglePhotoForDeletion = (photoId) => {
-    setPhotosToDelete((prev) => {
+  const togglePhotoSelection = (photoId) => {
+    setSelectedForDeletion((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(photoId)) newSet.delete(photoId);
-      else newSet.add(photoId);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
+      }
       return newSet;
     });
   };
 
   const handleDeleteRequest = () => {
-    if (photosToDelete.size === 0) return;
+    if (selectedForDeletion.size === 0) {
+      alert("삭제할 사진을 선택해주세요.");
+      return;
+    }
     setShowPasswordPrompt(true);
   };
 
-  const handlePasswordSubmit = () => {
+  const handlePasswordSubmit = async () => {
     if (passwordInput === CORRECT_PASSWORD) {
-      onDeleteSelectedPhotos(Array.from(photosToDelete));
-      setShowPasswordPrompt(false);
-      setPasswordInput("");
-      setPhotosToDelete(new Set());
+      console.log("삭제할 사진 ID들:", Array.from(selectedForDeletion));
+
+      try {
+        // 백엔드 API 호출하여 실제 삭제
+        const response = await fetch("/api/delete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            photoIds: Array.from(selectedForDeletion),
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // 백엔드에서 삭제 성공한 ID들만 프론트엔드에서도 제거
+          if (typeof onDeletePhotos === "function") {
+            onDeletePhotos(
+              result.deletedIds || Array.from(selectedForDeletion)
+            );
+          }
+
+          setShowPasswordPrompt(false);
+          setPasswordInput("");
+          setSelectedForDeletion(new Set());
+          setDeleteMode(false);
+
+          if (result.partialSuccess) {
+            alert(
+              `${result.deletedCount}/${result.totalRequested}장이 삭제되었습니다. 일부 사진은 삭제에 실패했습니다.`
+            );
+          } else {
+            alert(
+              `${result.deletedCount}장의 사진이 성공적으로 삭제되었습니다.`
+            );
+          }
+        } else {
+          throw new Error(result.error || "삭제 실패");
+        }
+      } catch (error) {
+        console.error("사진 삭제 중 오류:", error);
+        alert(`사진 삭제 중 오류가 발생했습니다: ${error.message}`);
+      }
     } else {
       alert("비밀번호가 틀렸습니다.");
+      setPasswordInput("");
     }
   };
 
-  useEffect(() => {
-    return () =>
-      previewImages.forEach((item) => URL.revokeObjectURL(item.preview));
-  }, [previewImages]);
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Escape") {
+        if (showPasswordPrompt) {
+          setShowPasswordPrompt(false);
+          setPasswordInput("");
+        } else {
+          closeModal();
+        }
+      }
+    },
+    [closeModal, showPasswordPrompt]
+  );
 
-  if (uploadSuccess) {
+  useEffect(() => {
+    if (selectedImageIndex !== null || showPasswordPrompt) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [selectedImageIndex, handleKeyDown, showPasswordPrompt]);
+
+  const handleImageError = useCallback((photoId, imageUrl) => {
+    console.error("이미지 로드 실패:", imageUrl);
+    setImageErrors((prev) => new Set([...prev, photoId]));
+  }, []);
+
+  const handleImageLoad = useCallback((photoId) => {
+    setImageErrors((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(photoId);
+      return newSet;
+    });
+  }, []);
+
+  if (!photos || photos.length === 0) {
     return (
-      <div
-        className="photo-upload-container"
-        style={{ textAlign: "center", padding: "40px 20px" }}
-      >
-        <div style={{ fontSize: "60px" }}>🎉</div>
-        <h2>{monthName} 사진이 성공적으로 저장되었습니다!</h2>
-        <p>
-          {autoRedirectCountdown}초 후 {monthName} 갤러리로 이동합니다...
-        </p>
-        <button className="fortune-btn" onClick={onBack}>
-          지금 바로 이동
-        </button>
+      <div className="card">
+        <h2>다인이의 성장 앨범</h2>
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <p>아직 사진이 없어요.</p>
+          <p>월별 사진 갤러리에서 사진을 추가해주세요.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="photo-upload-container">
-      <div className="upload-header">
-        {/* 돌아가기 버튼은 상단 네비게이션으로 통합되었으므로 제거 */}
-        <h1>📷 {monthName} 사진 관리</h1>
-      </div>
+    <>
+      <div className="card">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+            flexWrap: "wrap",
+            gap: "10px",
+          }}
+        >
+          <h2>다인이의 성장 앨범</h2>
 
-      <div className="card" style={{ marginBottom: "30px" }}>
-        <h3>새로운 사진 추가하기</h3>
-        <div className="file-selector">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileSelect}
-            style={{ display: "none" }}
-            id="photo-input"
-          />
-          <label htmlFor="photo-input" className="file-input-label">
-            사진 선택
-          </label>
-        </div>
-        {previewImages.length > 0 && (
-          <div className="preview-section">
-            <h4>업로드할 사진 ({previewImages.length}장)</h4>
-            <div className="preview-grid">
-              {previewImages.map((item) => (
-                <div key={item.id} className="preview-item">
-                  <img src={item.preview} alt={item.name} />
-                  <button
-                    className="remove-btn"
-                    onClick={() =>
-                      setPreviewImages((p) =>
-                        p.filter((img) => img.id !== item.id)
-                      )
-                    }
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
+          {/* 삭제 기능이 prop으로 전달된 경우에만 표시 */}
+          {onDeletePhotos && (
+            <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+              <button
+                className="fortune-btn"
+                onClick={toggleDeleteMode}
+                style={{
+                  backgroundColor: deleteMode ? "#dc3545" : "#6c757d",
+                  fontSize: "12px",
+                  padding: "8px 12px",
+                  color: "white",
+                }}
+              >
+                {deleteMode ? "취소" : "사진 삭제"}
+              </button>
+
+              {deleteMode && selectedForDeletion.size > 0 && (
+                <button
+                  className="fortune-btn"
+                  onClick={handleDeleteRequest}
+                  style={{
+                    backgroundColor: "#dc3545",
+                    fontSize: "12px",
+                    padding: "8px 12px",
+                    color: "white",
+                  }}
+                >
+                  선택 삭제 ({selectedForDeletion.size})
+                </button>
+              )}
             </div>
-            <button
-              className="upload-btn-main"
-              onClick={handleUpload}
-              disabled={uploading}
-            >
-              {uploading ? "업로드 중..." : `${previewImages.length}장 업로드`}
-            </button>
+          )}
+        </div>
+
+        {deleteMode && (
+          <div
+            style={{
+              backgroundColor: "#fff3cd",
+              border: "1px solid #ffeaa7",
+              borderRadius: "8px",
+              padding: "10px",
+              marginBottom: "15px",
+              textAlign: "center",
+            }}
+          >
+            <p style={{ margin: 0, color: "#856404" }}>
+              ⚠️ 삭제할 사진을 선택하세요. 삭제된 사진은 복구할 수 없습니다.
+            </p>
           </div>
         )}
-      </div>
 
-      <div className="card">
-        <h3>기존 사진 관리 ({existingPhotos.length}장)</h3>
-        {existingPhotos.length > 0 ? (
-          <>
-            <p>삭제할 사진을 선택하세요.</p>
-            <div className="preview-grid deletion-mode">
-              {existingPhotos.map((photo) => (
+        <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
+          {deleteMode
+            ? "삭제할 사진을 선택하세요"
+            : "사진을 터치하면 크게 볼 수 있어요! 좌우로 스와이프하여 넘겨보세요."}
+        </p>
+
+        {/* 네비게이션 화살표 제거, 스와이프만 가능 */}
+        <Swiper
+          spaceBetween={10}
+          slidesPerView="auto"
+          breakpoints={{
+            320: { slidesPerView: 2, spaceBetween: 10 },
+            480: { slidesPerView: 3, spaceBetween: 15 },
+            768: { slidesPerView: 4, spaceBetween: 20 },
+          }}
+          style={{ padding: "20px 0", height: "300px" }}
+        >
+          {photos.map((photo, index) => {
+            const hasError = imageErrors.has(photo.id);
+            const imageUrl = photo.thumbnailUrl || photo.url;
+            const isSelected = selectedForDeletion.has(photo.id);
+
+            return (
+              <SwiperSlide key={photo.id || index}>
                 <div
-                  key={photo.id}
-                  className={`preview-item selectable ${
-                    photosToDelete.has(photo.id) ? "selected-for-deletion" : ""
-                  }`}
-                  onClick={() => togglePhotoForDeletion(photo.id)}
+                  className="gallery-item"
+                  onClick={() =>
+                    deleteMode
+                      ? togglePhotoSelection(photo.id)
+                      : !hasError && openModal(photo, index)
+                  }
+                  style={{
+                    cursor: hasError ? "default" : "pointer",
+                    position: "relative",
+                    border:
+                      deleteMode && isSelected ? "3px solid #dc3545" : "none",
+                    borderRadius: "10px",
+                  }}
                 >
-                  <img src={photo.thumbnailUrl || photo.url} alt="기존 사진" />
-                  <div className="selection-overlay">✓</div>
+                  {hasError ? (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "250px",
+                        backgroundColor: "#f5f5f5",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "10px",
+                        border: "2px dashed #ddd",
+                      }}
+                    >
+                      <div style={{ textAlign: "center", color: "#999" }}>
+                        <div style={{ fontSize: "30px", marginBottom: "10px" }}>
+                          📷
+                        </div>
+                        <div>이미지 로드 실패</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={imageUrl}
+                      alt={
+                        photo.alt || photo.name || `다인이 사진 ${index + 1}`
+                      }
+                      className="gallery-image"
+                      loading="lazy"
+                      onLoad={() => handleImageLoad(photo.id)}
+                      onError={() => handleImageError(photo.id, imageUrl)}
+                      style={{
+                        width: "100%",
+                        height: "250px",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                        transition: "transform 0.3s ease, filter 0.3s ease",
+                        opacity: deleteMode && isSelected ? 0.7 : 1,
+                      }}
+                    />
+                  )}
+
+                  {/* 삭제 모드 선택 표시 */}
+                  {deleteMode && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        right: "10px",
+                        width: "25px",
+                        height: "25px",
+                        borderRadius: "50%",
+                        backgroundColor: isSelected
+                          ? "#dc3545"
+                          : "rgba(255,255,255,0.8)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "2px solid #dc3545",
+                      }}
+                    >
+                      {isSelected && (
+                        <span style={{ color: "white", fontSize: "16px" }}>
+                          ✓
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-            <div className="deletion-controls">
-              <button
-                className="fortune-btn delete-btn"
-                onClick={handleDeleteRequest}
-                disabled={photosToDelete.size === 0}
-              >
-                선택한 사진 삭제 ({photosToDelete.size}장)
-              </button>
-            </div>
-          </>
-        ) : (
-          <p>이 달에는 아직 업로드된 사진이 없습니다.</p>
-        )}
+              </SwiperSlide>
+            );
+          })}
+        </Swiper>
       </div>
 
+      {/* 모달에서는 네비게이션 유지 */}
+      {selectedImageIndex !== null && (
+        <div
+          className="photo-modal-overlay"
+          onClick={closeModal}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.95)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 10000,
+            padding: "20px",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            className="photo-modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              maxWidth: "95vw",
+              maxHeight: "95vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            {/* 닫기 버튼 */}
+            <button
+              onClick={closeModal}
+              style={{
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                background: "rgba(255, 255, 255, 0.9)",
+                border: "none",
+                borderRadius: "50%",
+                width: "40px",
+                height: "40px",
+                cursor: "pointer",
+                fontSize: "24px",
+                color: "#333",
+                zIndex: 10001,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "bold",
+              }}
+            >
+              ×
+            </button>
+
+            {/* 모달에서는 네비게이션과 스와이프 모두 가능 */}
+            <Swiper
+              modules={[Navigation, Pagination]}
+              spaceBetween={20}
+              slidesPerView={1}
+              navigation={{
+                nextEl: ".photo-modal-next",
+                prevEl: ".photo-modal-prev",
+              }}
+              pagination={{
+                clickable: true,
+                el: ".photo-modal-pagination",
+              }}
+              initialSlide={selectedImageIndex}
+              style={{
+                width: "100%",
+                height: "80vh",
+                maxHeight: "600px",
+              }}
+            >
+              {photos.map((photo, index) => {
+                const imageUrl = photo.fullUrl || photo.url;
+                return (
+                  <SwiperSlide key={photo.id || index}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        height: "100%",
+                      }}
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={
+                          photo.alt || photo.name || `다인이 사진 ${index + 1}`
+                        }
+                        style={{
+                          maxWidth: "100%",
+                          maxHeight: "100%",
+                          objectFit: "contain",
+                          borderRadius: "10px",
+                          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.5)",
+                        }}
+                        onError={(e) => {
+                          console.error("모달 이미지 로드 실패:", photo);
+                          e.target.src = photo.thumbnailUrl || photo.url;
+                        }}
+                      />
+                    </div>
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
+
+            {/* 모달 네비게이션 버튼들 */}
+            <div
+              className="photo-modal-prev"
+              style={{
+                position: "absolute",
+                left: "20px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "50px",
+                height: "50px",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                zIndex: 10001,
+                color: "white",
+                fontSize: "24px",
+                fontWeight: "bold",
+                border: "none",
+              }}
+            >
+              ‹
+            </div>
+
+            <div
+              className="photo-modal-next"
+              style={{
+                position: "absolute",
+                right: "20px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "50px",
+                height: "50px",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                zIndex: 10001,
+                color: "white",
+                fontSize: "24px",
+                fontWeight: "bold",
+                border: "none",
+              }}
+            >
+              ›
+            </div>
+
+            {/* Pagination */}
+            <div
+              className="photo-modal-pagination"
+              style={{
+                position: "absolute",
+                bottom: "30px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 10001,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 비밀번호 입력 모달 */}
       {showPasswordPrompt && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>삭제 확인</h3>
-            <p>선택한 사진을 영구적으로 삭제하려면 비밀번호를 입력하세요.</p>
+        <div
+          className="modal-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 10001,
+          }}
+          onClick={() => {
+            setShowPasswordPrompt(false);
+            setPasswordInput("");
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "30px",
+              borderRadius: "15px",
+              minWidth: "300px",
+              maxWidth: "90%",
+              textAlign: "center",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: "0 0 15px 0", color: "#ff8f00" }}>
+              삭제 확인
+            </h3>
+            <p style={{ margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              선택한 {selectedForDeletion.size}장의 사진을 영구적으로 삭제하려면
+              비밀번호를 입력하세요.
+            </p>
             <input
               type="password"
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
               placeholder="비밀번호"
-              className="password-input"
+              style={{
+                width: "100%",
+                padding: "12px",
+                marginBottom: "20px",
+                border: "2px solid #ffe082",
+                borderRadius: "8px",
+                fontSize: "16px",
+                textAlign: "center",
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handlePasswordSubmit();
+                }
+              }}
+              autoFocus
             />
-            <div className="modal-actions">
-              <button className="fortune-btn" onClick={handlePasswordSubmit}>
-                확인
+            <div
+              style={{ display: "flex", gap: "10px", justifyContent: "center" }}
+            >
+              <button
+                className="fortune-btn"
+                onClick={handlePasswordSubmit}
+                style={{ backgroundColor: "#dc3545", color: "white" }}
+              >
+                삭제하기
               </button>
               <button
                 className="fortune-btn"
-                onClick={() => setShowPasswordPrompt(false)}
+                onClick={() => {
+                  setShowPasswordPrompt(false);
+                  setPasswordInput("");
+                }}
               >
                 취소
               </button>
@@ -295,8 +599,8 @@ function PhotoUpload({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
-export default PhotoUpload;
+export default PhotoGallery;

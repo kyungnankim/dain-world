@@ -55,7 +55,7 @@ const Doljanchi = ({ partyDate }) => {
         day: day,
         isEmpty: false,
         isOtherMonth: false,
-        isEventDay: day === 13, // 13일이 이벤트 날
+        isEventDay: day === 13, // 13일이 이벤트 날 (원형 하이라이트)
       });
     }
 
@@ -250,12 +250,10 @@ const Doljanchi = ({ partyDate }) => {
           <p className="location-address">{hotelInfo.name}</p>
         </div>
 
-        {/* 구글맵 임베드 - 정확한 주소로 */}
+        {/* 구글맵으로 변경 - 검색 인터페이스 없이 위치 표시 */}
         <div className="doljanchi-map-container">
           <iframe
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(
-              hotelInfo.fullAddress
-            )}&output=embed&z=16`}
+            src={`https://maps.google.com/maps?q=${hotelInfo.lat},${hotelInfo.lng}&hl=ko&z=16&output=embed`}
             className="doljanchi-map"
             allowFullScreen=""
             loading="eager"
@@ -343,10 +341,6 @@ const Doljanchi = ({ partyDate }) => {
       {/* 연락처 */}
       <div className="doljanchi-contact">
         <p>
-          <span className="contact-item">
-            헬퍼 연락처: <a href="tel:010-7503-6190">010-7503-6190</a>
-          </span>
-          <br />
           <span className="contact-item">
             최영민 연락처: <a href="tel:010-9937-2374">010-9937-2374</a>
           </span>
