@@ -67,11 +67,6 @@ function PhotoGallery({ photos = [] }) {
     <>
       <div className="card">
         <h2>다인이의 성장 앨범</h2>
-
-        <p style={{ textAlign: "center", marginTop: "20px", color: "#666" }}>
-          사진을 터치하면 크게 볼 수 있어요! 좌우로 스와이프하여 넘겨보세요.
-        </p>
-
         {/* 네비게이션 화살표 제거, 스와이프만 가능 */}
         <Swiper
           spaceBetween={10}
