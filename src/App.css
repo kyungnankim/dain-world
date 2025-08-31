@@ -1709,7 +1709,7 @@ h2 {
 .contact-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 
   cursor: pointer;
   transition: all 0.3s ease;
