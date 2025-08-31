@@ -20,13 +20,14 @@ const Doljanchi = ({ partyDate }) => {
     }
   }, [partyDate]);
 
-  // 정확한 호텔 정보 - 강서구 주소
+  // 정확한 호텔 정보 - 강서구 방화대로 94
   const hotelInfo = {
     name: "메이필드 호텔 낙원",
     address: "서울특별시 강서구 방화대로 94",
-    fullAddress: "서울특별시 강서구 외발산동 방화대로 94",
-    lat: 37.5704,
-    lng: 126.9869,
+    fullAddress: "서울특별시 강서구 방화대로 94, 메이필드 호텔 낙원",
+    detailAddress: "서울 강서구 방화대로 94",
+    lat: 37.5587, // 강서구 방화대로 실제 위도
+    lng: 126.8515, // 강서구 방화대로 실제 경도 (중구보다 서쪽)
   };
 
   // 캘린더 생성 함수
@@ -73,8 +74,9 @@ const Doljanchi = ({ partyDate }) => {
 
   // 카카오맵으로 길찾기 - 정확한 주소 사용
   const openKakaoMap = () => {
+    const query = `${hotelInfo.name} ${hotelInfo.detailAddress}`;
     window.open(
-      `https://map.kakao.com/link/to/${encodeURIComponent(hotelInfo.name)},${
+      `https://map.kakao.com/link/to/${encodeURIComponent(query)},${
         hotelInfo.lat
       },${hotelInfo.lng}`,
       "_blank"
@@ -83,24 +85,30 @@ const Doljanchi = ({ partyDate }) => {
 
   // 네이버맵으로 길찾기
   const openNaverMap = () => {
-    const query = encodeURIComponent(`${hotelInfo.name} ${hotelInfo.address}`);
+    const query = encodeURIComponent(
+      `${hotelInfo.name} ${hotelInfo.detailAddress}`
+    );
     window.open(`https://map.naver.com/v5/search/${query}`, "_blank");
   };
 
   // 구글맵으로 길찾기
   const openGoogleMap = () => {
-    const query = encodeURIComponent(hotelInfo.fullAddress);
+    const query = encodeURIComponent(`${hotelInfo.fullAddress}`);
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${query}`,
       "_blank"
     );
   };
 
-  // 카카오네비 (모바일 앱 우선)
+  // 카카오네비 (모바일 앱 우선) - 정확한 좌표 사용
   const openKakaoNavi = () => {
     const isMobile = /Android|iPhone/i.test(navigator.userAgent);
     if (isMobile) {
-      window.location.href = `kakaonavi://navigate?ep=${hotelInfo.lat},${hotelInfo.lng}&by=CAR`;
+      // 카카오네비 앱으로 바로 네비게이션
+      const naviUrl = `kakaonavi://navigate?ep=${hotelInfo.lat},${hotelInfo.lng}&by=CAR`;
+      window.location.href = naviUrl;
+
+      // 앱이 없는 경우 대체 링크
       setTimeout(() => {
         openKakaoMap();
       }, 2500);
@@ -111,21 +119,35 @@ const Doljanchi = ({ partyDate }) => {
 
   // 구글맵 네비로 목적지 설정
   const openGoogleNavi = () => {
-    const query = encodeURIComponent(hotelInfo.fullAddress);
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${query}`,
-      "_blank"
-    );
+    const query = encodeURIComponent(`${hotelInfo.fullAddress}`);
+    const isMobile = /Android|iPhone/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // 모바일에서는 구글맵 앱 연결
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${hotelInfo.lat},${
+          hotelInfo.lng
+        }&destination_place_id=${encodeURIComponent(hotelInfo.name)}`,
+        "_blank"
+      );
+    } else {
+      // 데스크톱에서는 웹 버전
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${query}`,
+        "_blank"
+      );
+    }
   };
 
   // 네이버네비 (모바일 앱 우선)
   const openNaverNavi = () => {
     const isMobile = /Android|iPhone/i.test(navigator.userAgent);
     if (isMobile) {
-      const naviUrl = `nmap://search?query=${encodeURIComponent(
-        `${hotelInfo.name} ${hotelInfo.address}`
-      )}&appname=com.example.myapp`;
+      const naviUrl = `nmap://navigation?dlat=${hotelInfo.lat}&dlng=${
+        hotelInfo.lng
+      }&dname=${encodeURIComponent(hotelInfo.name)}&appname=com.dainworld.app`;
       window.location.href = naviUrl;
+
       setTimeout(() => {
         openNaverMap();
       }, 2500);
@@ -143,9 +165,12 @@ const Doljanchi = ({ partyDate }) => {
 
       if (isAndroid) {
         try {
-          window.location.href = `tmap://search?name=${encodeURIComponent(
-            hotelInfo.name
-          )}`;
+          // 안드로이드 티맵 앱 연결
+          const tmapUrl = `tmap://route?goalx=${hotelInfo.lng}&goaly=${
+            hotelInfo.lat
+          }&goalname=${encodeURIComponent(hotelInfo.name)}`;
+          window.location.href = tmapUrl;
+
           setTimeout(() => {
             openGoogleNavi();
           }, 3000);
@@ -153,10 +178,9 @@ const Doljanchi = ({ partyDate }) => {
           openGoogleNavi();
         }
       } else {
+        // iOS에서는 애플 지도 또는 구글맵으로 연결
         try {
-          window.location.href = `maps://maps.google.com/maps?q=${encodeURIComponent(
-            hotelInfo.fullAddress
-          )}`;
+          window.location.href = `maps://maps.google.com/maps?q=${hotelInfo.lat},${hotelInfo.lng}`;
           setTimeout(() => {
             openGoogleNavi();
           }, 2000);
@@ -186,23 +210,40 @@ const Doljanchi = ({ partyDate }) => {
           />
         </div>
       </div>
+      {/* 이벤트 안내            padding: "15px",
 
-      {/* 부모 정보 및 날짜 */}
-      <div className="doljanchi-info-card">
-        <div className="doljanchi-parents">
-          아빠 <span className="parent-name">최영민</span>, 엄마{" "}
-          <span className="parent-name">김민경</span>
+          borderRadius: "10px",
+          border: "2px solid #ffc107",backgroundColor: "rgba(255, 193, 7, 0.1)",*/}
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: "20px",
+        }}
+      >
+        <div
+          style={{
+            color: "#666",
+            fontSize: "1.5em",
+          }}
+        >
+          아빠 최영민, 엄마 김민경
         </div>
-
-        <div className="doljanchi-date">2025년 09월 13일 (토요일)</div>
-        <div className="doljanchi-time">오후 5시 (17시)</div>
-        <div className="doljanchi-venue">장소: {hotelInfo.name}</div>
+        <div
+          style={{
+            color: "#666",
+            fontSize: "1.5em",
+          }}
+        >
+          2025년 9월 13일 (토) 오후 5시
+          <br />
+          장소: 서울 강서구 메이필드 호텔 낙원
+        </div>
       </div>
 
-      {/* 깔끔한 캘린더 */}
+      {/* 캘린더 - 13일 이벤트 강조 */}
       <div className="clean-calendar-container">
         <div className="clean-calendar-header">캘린더</div>
-        <div className="clean-calendar-month">{monthName}</div>
+        <div className="clean-calendar-month">{monthName} 2025</div>
 
         <div className="clean-calendar-grid">
           {/* 요일 헤더 */}
@@ -219,8 +260,36 @@ const Doljanchi = ({ partyDate }) => {
               className={`clean-calendar-day ${
                 dayInfo.isOtherMonth ? "other-month" : ""
               } ${dayInfo.isEventDay ? "event-day" : ""}`}
+              style={
+                dayInfo.isEventDay
+                  ? {
+                      backgroundColor: "#ffc107",
+                      color: "#333",
+                      fontWeight: "700",
+                      borderRadius: "50%",
+                      position: "relative",
+                      boxShadow: "0 0 0 3px rgba(255, 193, 7, 0.3)",
+                      transform: "scale(1.1)",
+                      zIndex: 2,
+                    }
+                  : {}
+              }
             >
               {dayInfo.day}
+              {dayInfo.isEventDay && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "-8px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    fontSize: "10px",
+                    fontWeight: "bold",
+                    color: "#ff8f00",
+                    whiteSpace: "nowrap",
+                  }}
+                ></div>
+              )}
             </div>
           ))}
         </div>
@@ -231,12 +300,7 @@ const Doljanchi = ({ partyDate }) => {
         <p>
           하나의 작은 점으로 시작하여 열 달을 품고 작고 여린 품에 보듬기도
           조심스러웠던 이 작은 아이로부터 엄마, 아빠로서의 삶을 배웠습니다.
-        </p>
-        <p>
-          어느날 천사처럼 나타난 우리 아이가 어느덧 일 년이 되어 감사하는
-          마음으로 조이한 자리를 마련하였습니다.
-        </p>
-        <p className="doljanchi-message-highlight">
+          <br />
           바쁘시더라도 사랑하는 우리 아이가 건강하게 자라도록 참석하여
           축복해주시면 큰 기쁨이 되겠습니다.
         </p>
@@ -246,11 +310,11 @@ const Doljanchi = ({ partyDate }) => {
       <div className="doljanchi-location-card">
         <div className="location-address-card">
           <h3 className="location-title">오시는 길</h3>
-          <p className="location-address">{hotelInfo.fullAddress}</p>
+          <p className="location-address">{hotelInfo.detailAddress}</p>
           <p className="location-address">{hotelInfo.name}</p>
         </div>
 
-        {/* 구글맵으로 변경 - 검색 인터페이스 없이 위치 표시 */}
+        {/* 구글맵으로 정확한 위치 표시 */}
         <div className="doljanchi-map-container">
           <iframe
             src={`https://maps.google.com/maps?q=${hotelInfo.lat},${hotelInfo.lng}&hl=ko&z=16&output=embed`}
@@ -263,6 +327,7 @@ const Doljanchi = ({ partyDate }) => {
               height: "100%",
               border: 0,
             }}
+            title="메이필드 호텔 낙원 위치"
           ></iframe>
         </div>
 
@@ -271,7 +336,11 @@ const Doljanchi = ({ partyDate }) => {
           <h4 className="navi-title">네비로 길찾기</h4>
           <div className="navi-buttons-container">
             {/* 카카오맵 로고 버튼 */}
-            <div className="navi-btn kakao-btn" onClick={openKakaoNavi}>
+            <div
+              className="navi-btn kakao-btn"
+              onClick={openKakaoNavi}
+              title="카카오맵"
+            >
               <svg width="15" height="15" viewBox="0 0 24 24">
                 <path
                   fill="#3c1e1e"
@@ -281,7 +350,11 @@ const Doljanchi = ({ partyDate }) => {
             </div>
 
             {/* 네이버맵 로고 버튼 */}
-            <div className="navi-btn naver-btn" onClick={openNaverNavi}>
+            <div
+              className="navi-btn naver-btn"
+              onClick={openNaverNavi}
+              title="네이버맵"
+            >
               <svg width="15" height="15" viewBox="0 0 24 24">
                 <path
                   fill="white"
@@ -291,7 +364,11 @@ const Doljanchi = ({ partyDate }) => {
             </div>
 
             {/* 구글맵 로고 버튼 */}
-            <div className="navi-btn google-btn" onClick={openGoogleNavi}>
+            <div
+              className="navi-btn google-btn"
+              onClick={openGoogleNavi}
+              title="구글맵"
+            >
               <svg width="15" height="15" viewBox="0 0 24 24">
                 <path
                   fill="#4285f4"
@@ -309,17 +386,6 @@ const Doljanchi = ({ partyDate }) => {
                   fill="#ea4335"
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
-              </svg>
-            </div>
-
-            {/* 티맵 로고 버튼 */}
-            <div className="navi-btn tmap-btn" onClick={openTmap}>
-              <svg width="15" height="15" viewBox="0 0 24 24">
-                <path
-                  fill="white"
-                  d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2zm0 2.83L17.1 18.4L12 16.17L6.9 18.4L12 4.83z"
-                />
-                <circle fill="white" cx="12" cy="8" r="2" />
               </svg>
             </div>
           </div>

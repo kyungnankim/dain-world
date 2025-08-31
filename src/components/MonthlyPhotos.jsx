@@ -1,7 +1,7 @@
-// src/components/MonthlyPhotos.jsx
+// src/components/MonthlyPhotos.jsx - 삭제 기능 추가 및 단조로운 색상
 import React, { useState, useEffect } from "react";
 import PhotoUpload from "./PhotoUpload";
-import { getMonthlyPhotos } from "../utils/cloudinary";
+import { getMonthlyPhotos, deletePhotos } from "../utils/cloudinary";
 
 const MonthlyPhotos = ({
   onBack,
@@ -16,29 +16,37 @@ const MonthlyPhotos = ({
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [imageErrors, setImageErrors] = useState(new Set());
   const [monthlyPhotosCache, setMonthlyPhotosCache] = useState({});
-  const [monthPhotoCounts, setMonthPhotoCounts] = useState({}); // 월별 사진 개수 저장
+  const [monthPhotoCounts, setMonthPhotoCounts] = useState({});
   const [loading, setLoading] = useState(false);
-  const [countsLoading, setCountsLoading] = useState(true); // 개수 로딩 상태
+  const [countsLoading, setCountsLoading] = useState(true);
+
+  // 삭제 기능 상태들
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedForDeletion, setSelectedForDeletion] = useState(new Set());
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+
+  const CORRECT_PASSWORD = "0923"; // 삭제 비밀번호
 
   useEffect(() => {
     console.log("MonthlyPhotos - 받은 사진 개수:", photos.length);
     console.log("MonthlyPhotos - 사진 데이터:", photos);
   }, [photos]);
 
-  // 월별 정보
+  // 월별 정보 - 단조로운 회색톤 색상
   const months = [
-    { month: 1, name: "1개월", color: "#87CEEB" },
-    { month: 2, name: "2개월", color: "#FFB6C1" },
-    { month: 3, name: "3개월", color: "#98FB98" },
-    { month: 4, name: "4개월", color: "#DDA0DD" },
-    { month: 5, name: "5개월", color: "#F0E68C" },
-    { month: 6, name: "6개월", color: "#FFE4B5" },
-    { month: 7, name: "7개월", color: "#40E0D0" },
-    { month: 8, name: "8개월", color: "#FFD700" },
-    { month: 9, name: "9개월", color: "#DEB887" },
-    { month: 10, name: "10개월", color: "#FF6347" },
-    { month: 11, name: "11개월", color: "#CD853F" },
-    { month: 12, name: "12개월", color: "#90EE90" },
+    { month: 1, name: "1개월", color: "#f8f9fa" },
+    { month: 2, name: "2개월", color: "#e9ecef" },
+    { month: 3, name: "3개월", color: "#dee2e6" },
+    { month: 4, name: "4개월", color: "#ced4da" },
+    { month: 5, name: "5개월", color: "#adb5bd" },
+    { month: 6, name: "6개월", color: "#9ba1a6" },
+    { month: 7, name: "7개월", color: "#868e96" },
+    { month: 8, name: "8개월", color: "#748991" },
+    { month: 9, name: "9개월", color: "#6c757d" },
+    { month: 10, name: "10개월", color: "#5a6268" },
+    { month: 11, name: "11개월", color: "#495057" },
+    { month: 12, name: "12개월", color: "#343a40" },
   ];
 
   // 컴포넌트 마운트 시 모든 월의 사진 개수를 미리 로드
@@ -107,7 +115,7 @@ const MonthlyPhotos = ({
     };
 
     loadAllMonthCounts();
-  }, [photos]); // photos가 변경될 때마다 다시 로드
+  }, [photos]);
 
   const getPhotosForMonth = (monthNum) => {
     const propsPhotos = photos.filter((p) => p.month === monthNum);
@@ -150,13 +158,18 @@ const MonthlyPhotos = ({
     console.log(`${monthNum}월 선택됨`);
     if (selectedMonth === monthNum) {
       setSelectedMonth(null);
+      setDeleteMode(false);
+      setSelectedForDeletion(new Set());
       return;
     }
     setSelectedMonth(monthNum);
+    setDeleteMode(false);
+    setSelectedForDeletion(new Set());
     await loadMonthlyPhotos(monthNum);
   };
 
   const openModal = (photo) => {
+    if (deleteMode) return; // 삭제 모드에서는 모달 열지 않음
     console.log("모달 열기:", photo);
     setSelectedImage(photo);
   };
@@ -203,50 +216,126 @@ const MonthlyPhotos = ({
     }
   };
 
-  const handlePhotosDeleted = (deletedIds) => {
-    console.log("사진 삭제됨:", deletedIds);
-    onDeletePhotos(deletedIds);
+  // 삭제 관련 함수들
+  const toggleDeleteMode = () => {
+    setDeleteMode(!deleteMode);
+    setSelectedForDeletion(new Set());
+  };
 
-    // 삭제된 사진들의 월별 개수 업데이트
-    const deletedPhotos = photos.filter((p) => deletedIds.includes(p.id));
-    const monthCounts = {};
-    deletedPhotos.forEach((photo) => {
-      if (photo.month) {
-        monthCounts[photo.month] = (monthCounts[photo.month] || 0) + 1;
+  const togglePhotoSelection = (photoId) => {
+    setSelectedForDeletion((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
       }
+      return newSet;
     });
+  };
 
-    setMonthPhotoCounts((prev) => {
-      const updated = { ...prev };
-      Object.keys(monthCounts).forEach((month) => {
-        updated[month] = Math.max(
-          0,
-          (updated[month] || 0) - monthCounts[month]
-        );
-      });
-      return updated;
-    });
+  const handleDeleteRequest = () => {
+    if (selectedForDeletion.size === 0) {
+      alert("삭제할 사진을 선택해주세요.");
+      return;
+    }
+    setShowPasswordPrompt(true);
+  };
 
-    setMonthlyPhotosCache((prev) => {
-      const updated = { ...prev };
-      Object.keys(updated).forEach((month) => {
-        updated[month] = updated[month].filter(
-          (p) => !deletedIds.includes(p.id)
-        );
-      });
-      return updated;
-    });
+  const handlePasswordSubmit = async () => {
+    if (passwordInput === CORRECT_PASSWORD) {
+      try {
+        console.log("삭제할 사진 ID들:", Array.from(selectedForDeletion));
+
+        const result = await deletePhotos(Array.from(selectedForDeletion));
+
+        if (result.success) {
+          // 삭제된 사진들을 상태에서 제거
+          const deletedIds =
+            result.deletedIds || Array.from(selectedForDeletion);
+
+          // 부모 컴포넌트에도 알림
+          if (onDeletePhotos) {
+            onDeletePhotos(deletedIds);
+          }
+
+          // 캐시에서도 삭제된 사진 제거
+          setMonthlyPhotosCache((prev) => {
+            const updated = { ...prev };
+            Object.keys(updated).forEach((month) => {
+              updated[month] = updated[month].filter(
+                (p) => !deletedIds.includes(p.id)
+              );
+            });
+            return updated;
+          });
+
+          // 선택된 월의 사진 개수 업데이트
+          if (selectedMonth) {
+            const deletedFromThisMonth = deletedIds.filter((id) =>
+              getPhotosForMonth(selectedMonth).some((p) => p.id === id)
+            ).length;
+
+            setMonthPhotoCounts((prev) => ({
+              ...prev,
+              [selectedMonth]: Math.max(
+                0,
+                (prev[selectedMonth] || 0) - deletedFromThisMonth
+              ),
+            }));
+          }
+
+          setShowPasswordPrompt(false);
+          setPasswordInput("");
+          setSelectedForDeletion(new Set());
+          setDeleteMode(false);
+
+          const message = result.partialSuccess
+            ? `${result.deletedCount}/${result.totalRequested}장이 삭제되었습니다.`
+            : `${result.deletedCount}장이 성공적으로 삭제되었습니다.`;
+
+          alert(message);
+
+          // 새로고침
+          if (onRefresh) {
+            setTimeout(onRefresh, 500);
+          }
+
+          // 현재 월 새로고침
+          if (selectedMonth) {
+            setTimeout(() => {
+              loadMonthlyPhotos(selectedMonth);
+            }, 500);
+          }
+        } else {
+          throw new Error(result.error || "삭제 실패");
+        }
+      } catch (error) {
+        console.error("사진 삭제 중 오류:", error);
+        alert(`삭제 중 오류가 발생했습니다: ${error.message}`);
+      }
+    } else {
+      alert("비밀번호가 틀렸습니다.");
+      setPasswordInput("");
+    }
   };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") closeModal();
+      if (e.key === "Escape") {
+        if (showPasswordPrompt) {
+          setShowPasswordPrompt(false);
+          setPasswordInput("");
+        } else {
+          closeModal();
+        }
+      }
     };
-    if (selectedImage) {
+    if (selectedImage || showPasswordPrompt) {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [selectedImage]);
+  }, [selectedImage, showPasswordPrompt]);
 
   if (showUpload) {
     const monthInfo = months.find((m) => m.month === uploadMonth);
@@ -257,7 +346,7 @@ const MonthlyPhotos = ({
         onBack={() => setShowUpload(false)}
         onPhotoUploaded={handlePhotoUploaded}
         existingPhotos={getPhotosForMonth(uploadMonth)}
-        onDeleteSelectedPhotos={handlePhotosDeleted}
+        onDeleteSelectedPhotos={onDeletePhotos}
         onRefresh={onRefresh}
       />
     );
@@ -267,15 +356,14 @@ const MonthlyPhotos = ({
     <div className="monthly-photos-container">
       <div className="monthly-header">
         <div className="monthly-title">
-          <span className="month-emoji-large">📅</span>
-          <h1>개월별 사진 갤러리</h1>
+          <span className="month-emoji-large">개월별 사진 갤러리</span>
         </div>
       </div>
 
       <div className="monthly-content">
         <div className="compact-months-grid">
           {months.map((monthInfo) => {
-            // 실제 사진 개수 표시 (로딩 중이면 "..." 표시)
+            // 실제 사진 개수 표시
             const monthPhotoCount = countsLoading
               ? "..."
               : monthPhotoCounts[monthInfo.month] || 0;
@@ -289,7 +377,10 @@ const MonthlyPhotos = ({
                 className={`compact-month-card ${
                   isSelected ? "selected" : ""
                 } ${isCurrentlyLoading ? "loading" : ""}`}
-                style={{ backgroundColor: monthInfo.color }}
+                style={{
+                  backgroundColor: monthInfo.color,
+                  color: monthInfo.month > 6 ? "white" : "#333", // 어두운 색상일 때 흰색 텍스트
+                }}
                 onClick={() => handleMonthSelect(monthInfo.month)}
               >
                 <div className="compact-month-content">
@@ -317,28 +408,89 @@ const MonthlyPhotos = ({
                   {months.find((m) => m.month === selectedMonth)?.name} 다인이
                   사진
                 </h3>
-                <button
-                  className="upload-btn-compact"
-                  onClick={() => {
-                    setUploadMonth(selectedMonth);
-                    setShowUpload(true);
-                  }}
-                >
-                  사진추가
-                </button>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <button
+                    className="upload-btn-compact"
+                    onClick={() => {
+                      setUploadMonth(selectedMonth);
+                      setShowUpload(true);
+                    }}
+                  >
+                    사진추가
+                  </button>
+
+                  {getPhotosForMonth(selectedMonth).length > 0 && (
+                    <>
+                      <button
+                        className="upload-btn-compact"
+                        onClick={toggleDeleteMode}
+                        style={{
+                          backgroundColor: deleteMode ? "#dc3545" : "#6c757d",
+                          color: "white",
+                        }}
+                      >
+                        {deleteMode ? "취소" : "사진삭제"}
+                      </button>
+
+                      {deleteMode && selectedForDeletion.size > 0 && (
+                        <button
+                          className="upload-btn-compact"
+                          onClick={handleDeleteRequest}
+                          style={{
+                            backgroundColor: "#dc3545",
+                            color: "white",
+                          }}
+                        >
+                          선택삭제 ({selectedForDeletion.size})
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
+
+            {deleteMode && (
+              <div
+                style={{
+                  backgroundColor: "#fff3cd",
+                  border: "1px solid #ffeaa7",
+                  borderRadius: "8px",
+                  padding: "15px",
+                  marginBottom: "20px",
+                  textAlign: "center",
+                }}
+              >
+                <p style={{ margin: 0, color: "#856404" }}>
+                  ⚠️ 삭제할 사진을 선택하세요. 삭제된 사진은 복구할 수 없습니다.
+                </p>
+              </div>
+            )}
+
             {getPhotosForMonth(selectedMonth).length > 0 ? (
               <div className="selected-month-grid">
                 {getPhotosForMonth(selectedMonth).map((photo) => {
                   const hasError = imageErrors.has(photo.id);
                   const imageUrl = photo.thumbnailUrl || photo.url;
+                  const isSelected = selectedForDeletion.has(photo.id);
 
                   return (
                     <div
                       key={photo.id}
                       className="selected-photo-item"
-                      onClick={() => !hasError && openModal(photo)}
+                      onClick={() =>
+                        deleteMode
+                          ? togglePhotoSelection(photo.id)
+                          : !hasError && openModal(photo)
+                      }
+                      style={{
+                        cursor: hasError ? "default" : "pointer",
+                        border:
+                          deleteMode && isSelected
+                            ? "3px solid #dc3545"
+                            : "none",
+                        position: "relative",
+                      }}
                     >
                       {hasError ? (
                         <div className="photo-error-placeholder">
@@ -354,7 +506,37 @@ const MonthlyPhotos = ({
                           decoding="async"
                           onLoad={() => handleImageLoad(photo.id)}
                           onError={() => handleImageError(photo.id, imageUrl)}
+                          style={{
+                            opacity: deleteMode && isSelected ? 0.7 : 1,
+                          }}
                         />
+                      )}
+
+                      {/* 삭제 모드 선택 표시 */}
+                      {deleteMode && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "10px",
+                            right: "10px",
+                            width: "25px",
+                            height: "25px",
+                            borderRadius: "50%",
+                            backgroundColor: isSelected
+                              ? "#dc3545"
+                              : "rgba(255,255,255,0.8)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "2px solid #dc3545",
+                          }}
+                        >
+                          {isSelected && (
+                            <span style={{ color: "white", fontSize: "16px" }}>
+                              ✓
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   );
@@ -383,6 +565,7 @@ const MonthlyPhotos = ({
         )}
       </div>
 
+      {/* 사진 상세보기 모달 */}
       {selectedImage && (
         <div className="modal-overlay" onClick={closeModal}>
           <div
@@ -404,6 +587,50 @@ const MonthlyPhotos = ({
 
             <div className="modal-photo-info">
               <div className="modal-photo-month">{selectedImage.month}월</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 비밀번호 입력 모달 */}
+      {showPasswordPrompt && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowPasswordPrompt(false)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>삭제 확인</h3>
+            <p>
+              선택한 {selectedForDeletion.size}장의 사진을 영구적으로 삭제하려면
+              비밀번호를 입력하세요.
+            </p>
+            <input
+              type="password"
+              className="password-input"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="비밀번호"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handlePasswordSubmit();
+                }
+              }}
+              autoFocus
+            />
+            <div className="modal-actions">
+              <button
+                className="fortune-btn"
+                onClick={handlePasswordSubmit}
+                style={{ backgroundColor: "#dc3545", color: "white" }}
+              >
+                삭제하기
+              </button>
+              <button
+                className="fortune-btn"
+                onClick={() => setShowPasswordPrompt(false)}
+              >
+                취소
+              </button>
             </div>
           </div>
         </div>
