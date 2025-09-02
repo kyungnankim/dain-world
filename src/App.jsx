@@ -227,8 +227,8 @@ const AppContent = () => {
 
   const handleDirectionsClick = () => {
     const destination = "메이필드 호텔 낙원";
-    const lat = 37.5704;
-    const lng = 126.9869;
+    const lat = 37.547699;
+    const lng = 126.818333;
 
     const isMobileDevice =
       /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
