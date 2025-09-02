@@ -1967,7 +1967,7 @@ h2 {
   right: -5px;
   bottom: -5px;
   border: 2px solid #ffd54f;
-  border-radius: 8px;
+  border-radius: 50%;
   animation: eventGlow 2s infinite;
 }
 

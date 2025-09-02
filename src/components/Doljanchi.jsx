@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import KakaoMap from "./KakaoMap";
 
 const Doljanchi = ({ partyDate }) => {
   const [dDay, setDDay] = useState("");
@@ -26,8 +27,8 @@ const Doljanchi = ({ partyDate }) => {
     address: "서울특별시 강서구 방화대로 94",
     fullAddress: "서울특별시 강서구 방화대로 94, 메이필드 호텔 낙원",
     detailAddress: "서울 강서구 방화대로 94",
-    lat: 37.5587, // 강서구 방화대로 실제 위도
-    lng: 126.8515, // 강서구 방화대로 실제 경도 (중구보다 서쪽)
+    lat: 37.547699,
+    lng: 126.818333,
   };
 
   // 캘린더 생성 함수
@@ -311,8 +312,10 @@ const Doljanchi = ({ partyDate }) => {
           <p className="location-address">{hotelInfo.detailAddress}</p>
           <p className="location-address">{hotelInfo.name}</p>
         </div>
-
-        {/* 구글맵으로 정확한 위치 표시 */}
+        {/*  <div className="doljanchi-map-container">
+          <KakaoMap lat={hotelInfo.lat} lng={hotelInfo.lng} />
+        </div>
+        구글맵으로 정확한 위치 표시 */}
         <div className="doljanchi-map-container">
           <iframe
             src={`https://maps.google.com/maps?q=${hotelInfo.lat},${hotelInfo.lng}&hl=ko&z=16&output=embed`}
