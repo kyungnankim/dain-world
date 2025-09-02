@@ -584,10 +584,6 @@ const MonthlyPhotos = ({
             <button onClick={closeModal} className="modal-close-btn">
               ×
             </button>
-
-            <div className="modal-photo-info">
-              <div className="modal-photo-month">{selectedImage.month}월</div>
-            </div>
           </div>
         </div>
       )}
