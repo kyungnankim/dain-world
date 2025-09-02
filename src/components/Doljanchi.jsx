@@ -23,14 +23,25 @@ const Doljanchi = ({ partyDate }) => {
 
   // 정확한 호텔 정보 - 강서구 방화대로 94
   const hotelInfo = {
-    name: "메이필드 호텔 낙원",
+    name: "메이필드 호텔 서울",
     address: "서울특별시 강서구 방화대로 94",
-    fullAddress: "서울특별시 강서구 방화대로 94, 메이필드 호텔 낙원",
+    fullAddress: "서울특별시 강서구 방화대로 94",
     detailAddress: "서울 강서구 방화대로 94",
+    placeName: "메이필드호텔 서울",
+    roadAddress: "강서구 방화대로 94",
     lat: 37.547699,
     lng: 126.818333,
   };
-
+  const hotelInfoa = {
+    name: "메이필드호텔 낙원",
+    roadAddress: "서울특별시 강서구 방화대로 94",
+    fullAddress: "서울 강서구 방화대로 94",
+    placeName: "메이필드호텔 낙원",
+    shortName: "메이필드호텔",
+    // 구글맵에서 확인한 정확한 좌표
+    lat: 37.5476841,
+    lng: 126.8183299,
+  };
   // 캘린더 생성 함수
   const generateCalendar = () => {
     const partyDate = new Date(2025, 8, 13); // 2025년 9월 13일 (month는 0부터 시작)
@@ -126,10 +137,7 @@ const Doljanchi = ({ partyDate }) => {
     if (isMobile) {
       // 모바일에서는 구글맵 앱 연결
       window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${hotelInfo.lat},${
-          hotelInfo.lng
-        }&destination_place_id=${encodeURIComponent(hotelInfo.name)}`,
-        "_blank"
+        "https://www.google.co.kr/maps/place/%EB%A9%94%EC%9D%B4%ED%95%84%EB%93%9C%ED%98%B8%ED%85%94+%EB%82%99%EC%9B%90/data=!4m17!1m10!3m9!1s0x357c9b99286a7d3f:0x2415eebcaebededb!2z66mU7J207ZWE65OcIO2YuO2FlA!5m2!4m1!1i2!8m2!3d37.5475247!4d126.8187885!16s%2Fg%2F1tffrw1p!3m5!1s0x357c9cfbbfd62485:0x7e49e90e2199186e!8m2!3d37.5476841!4d126.8183299!16s%2Fg%2F1thxt4d7?entry=ttu&g_ep=EgoyMDI1MDgyNS4wIKXMDSoASAFQAw%3D%3D"
       );
     } else {
       // 데스크톱에서는 웹 버전
