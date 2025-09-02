@@ -262,13 +262,13 @@ const Doljanchi = ({ partyDate }) => {
               style={
                 dayInfo.isEventDay
                   ? {
-                      backgroundColor: "#ffc107",
+                      /*          backgroundColor: "#ffc107",
                       color: "#333",
                       fontWeight: "700",
                       borderRadius: "50%",
                       position: "relative",
-                      boxShadow: "0 0 0 3px rgba(255, 193, 7, 0.3)",
-                      transform: "scale(1.1)",
+                       boxShadow: "0 0 0 3px rgba(255, 193, 7, 0.3)",
+                      transform: "scale(1.1)",*/
                       zIndex: 2,
                     }
                   : {}

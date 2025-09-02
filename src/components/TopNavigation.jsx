@@ -16,9 +16,7 @@ const TopNavigation = ({
           <div className="top-nav-text">뒤로가기</div>
         </div>
       ) : (
-        <div className="top-nav-item logo-item">
-          <div className="top-nav-text">돌잔치이</div>
-        </div>
+        <div className="top-nav-item logo-item"></div>
       )}
 
       <div
